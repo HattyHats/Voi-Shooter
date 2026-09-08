@@ -1,0 +1,3149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>VOI SHOOTER: CODE PURGE - Blockchain Defense Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap">
+<style>
+  :root {
+    --bg: #04080e;
+    --panel: rgba(7, 14, 23, 0.75);
+    --panel-border: rgba(0, 245, 255, 0.25);
+    --border: rgba(0, 245, 255, 0.35);
+    --accent: #00f5ff;
+    --accent2: #7b00ff;
+    --accent3: #ff006e;
+    --warn: #ffb800;
+    --correct: #00ff9d;
+    --wrong: #ff3366;
+    --text: #e2f1fc;
+    --dim: #628298;
+    --glow: 0 0 16px rgba(0, 245, 255, 0.6), 0 0 32px rgba(0, 245, 255, 0.25);
+    --glow2: 0 0 16px rgba(123, 0, 255, 0.6);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Rajdhani', sans-serif; overflow: hidden; position: relative; }
+
+  /* CRT scanline overlay */
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.2) 2px, rgba(0,0,0,0.2) 4px);
+    pointer-events: none; z-index: 1000;
+  }
+  body::after {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(0, 245, 255, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 245, 255, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px; opacity: 0.25; pointer-events: none;
+  }
+
+  /* Screens */
+  .screen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 10; transition: opacity 0.4s ease; overflow: hidden;
+  }
+  .screen.hidden { opacity: 0; pointer-events: none; }
+
+  
+  /* ═══════════════ GLOWING VOI LOGO IN SPLASH BACKGROUND ═══════════════ */
+  .splash-voi-backdrop {
+    position: absolute;
+    top: 34%; left: 50%;
+    transform: translate(-50%, -50%) translateZ(10px);
+    width: clamp(340px, 58vw, 640px);
+    height: clamp(340px, 58vw, 640px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    pointer-events: none; z-index: 1;
+    transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .splash-voi-logo {
+    width: 100%; height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 0 40px rgba(0, 245, 255, 0.95)) drop-shadow(0 0 85px rgba(123, 0, 255, 0.85)) drop-shadow(0 0 140px rgba(0, 245, 255, 0.65)) brightness(1.7) contrast(1.25);
+    animation: voiLogoBreathe 4s ease-in-out infinite alternate;
+    opacity: 0.95;
+  }
+  .splash-voi-aura {
+    position: absolute; inset: -50px;
+    background: radial-gradient(circle, rgba(0, 245, 255, 0.38) 0%, rgba(123, 0, 255, 0.26) 42%, transparent 72%);
+    border-radius: 50%;
+    animation: voiAuraPulse 3.2s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  .splash-voi-rings {
+    position: absolute; inset: -40px;
+    border: 2px dashed rgba(0, 245, 255, 0.45);
+    border-radius: 50%;
+    animation: voiRingsSpin 20s linear infinite;
+    pointer-events: none;
+    box-shadow: 0 0 25px rgba(0, 245, 255, 0.35);
+  }
+  .splash-voi-rings::after {
+    content: ''; position: absolute; inset: 26px;
+    border: 1.5px dotted rgba(123, 0, 255, 0.55);
+    border-radius: 50%;
+    animation: voiRingsSpin 12s linear infinite reverse;
+  }
+  .splash-voi-sublabel {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: clamp(10px, 1.6vw, 13px);
+    color: #00f5ff;
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(0, 245, 255, 0.8);
+    margin-top: 14px;
+    opacity: 0.9;
+  }
+  @keyframes voiLogoBreathe {
+    0%   { transform: scale(0.95) rotate(-1.5deg); filter: drop-shadow(0 0 30px rgba(0, 245, 255, 0.8)) drop-shadow(0 0 70px rgba(123, 0, 255, 0.7)) brightness(1.5); opacity: 0.88; }
+    100% { transform: scale(1.08) rotate(1.5deg);  filter: drop-shadow(0 0 60px rgba(0, 245, 255, 1)) drop-shadow(0 0 120px rgba(123, 0, 255, 0.95)) drop-shadow(0 0 35px #ffffff) brightness(1.85); opacity: 1; }
+  }
+  @keyframes voiAuraPulse {
+    0%   { transform: scale(0.85); opacity: 0.45; }
+    100% { transform: scale(1.18); opacity: 0.92; }
+  }
+  @keyframes voiRingsSpin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  /* ═══════════════ 3D SPLASH SCREEN ═══════════════ */
+  #splashScreen {
+    position: fixed; inset: 0; z-index: 2000;
+    background: radial-gradient(circle at center, #071524 0%, #03080e 65%, #010408 100%);
+    perspective: 1200px; transform-style: preserve-3d;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), filter 0.6s ease;
+  }
+  #splashScreen.fade-out { opacity: 0; transform: scale(1.12) translateZ(80px); filter: blur(8px); pointer-events: none; }
+  #splashScreen.gone { display: none; }
+
+  .splash-grid-bg { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; opacity: 0.85; pointer-events: none; }
+  .splash-3d-stage {
+    position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transform-style: preserve-3d; animation: stage3DFloat 6s ease-in-out infinite alternate;
+  }
+  @keyframes stage3DFloat {
+    0%   { transform: rotateX(5deg) rotateY(-3deg) translateZ(0px); }
+    100% { transform: rotateX(-3deg) rotateY(4deg) translateZ(20px); }
+  }
+  .splash-char-container {
+    position: relative; display: flex; justify-content: center; align-items: center;
+    margin-bottom: 12px; width: 340px; height: 320px; flex-shrink: 0; transform-style: preserve-3d;
+  }
+  #splashChar {
+    position: relative; opacity: 0;
+    filter: drop-shadow(0 0 35px rgba(0, 245, 255, 0.6)) drop-shadow(0 0 70px rgba(123, 0, 255, 0.4));
+    transition: opacity 0.8s ease, transform 0.8s ease; z-index: 1; transform: translateZ(30px);
+  }
+  #splashChar.visible { opacity: 1; }
+
+  .splash-text-wrap {
+    position: relative; z-index: 2; display: flex; flex-direction: column;
+    align-items: center; gap: clamp(8px, 1.6vh, 16px); margin-bottom: 3vh; transform-style: preserve-3d;
+  }
+  .splash-welcome {
+    font-family: 'Rajdhani', sans-serif; font-size: clamp(16px, 3.5vw, 26px); font-weight: 600;
+    color: #a8d5e5; letter-spacing: 0.45em; text-transform: uppercase;
+    text-shadow: 0 0 12px rgba(0, 245, 255, 0.6); opacity: 0;
+    transform: translateY(14px) translateZ(20px); transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .splash-welcome.in { opacity: 1; transform: translateY(0) translateZ(20px); }
+  .splash-title {
+    font-family: 'Orbitron', monospace; font-size: clamp(44px, 9vw, 95px); font-weight: 900;
+    letter-spacing: 0.16em; color: #ffffff; -webkit-text-stroke: 1.5px rgba(0, 245, 255, 0.9);
+    transform-style: preserve-3d;
+    text-shadow:
+      0 1px 0 #00e5ff, 0 2px 0 #00b8cc, 0 3px 0 #008b99, 0 4px 0 #005e66,
+      0 5px 0 #00373d, 0 6px 14px rgba(0, 0, 0, 0.9),
+      0 0 30px rgba(0, 245, 255, 0.9), 0 0 70px rgba(123, 0, 255, 0.7);
+    opacity: 0; transform: translateY(20px) scale(0.92) translateZ(40px);
+    transition: opacity 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    line-height: 1; text-align: center;
+  }
+  .splash-title.in { opacity: 1; transform: translateY(0) scale(1) translateZ(40px); }
+  .splash-credit {
+    font-family: 'Share Tech Mono', monospace; font-size: clamp(11px, 1.8vw, 15px);
+    color: #5d8199; letter-spacing: 0.3em; text-transform: uppercase; opacity: 0;
+    transform: translateY(10px) translateZ(15px); transition: opacity 0.6s ease, transform 0.6s ease;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .splash-credit.in { opacity: 1; transform: translateY(0) translateZ(15px); }
+
+  .glitch { position: relative; color: #00f5ff; display: inline-block; animation: glitchMain 2.8s infinite; }
+  .glitch::before, .glitch::after { content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; }
+  .glitch::before { color: #ff006e; animation: glitchTop 2.8s infinite; clip-path: polygon(0 0,100% 0,100% 40%,0 40%); }
+  .glitch::after { color: #00ff9d; animation: glitchBot 2.8s infinite; clip-path: polygon(0 60%,100% 60%,100% 100%,0 100%); }
+  @keyframes glitchMain { 0%,90%,100%{transform:translate(0)} 92%{transform:translate(-2px,1px)} 94%{transform:translate(2px,-1px)} 96%{transform:translate(-1px,2px)} 98%{transform:translate(1px,-2px)} }
+  @keyframes glitchTop { 0%,88%,100%{transform:translate(0);opacity:0} 90%{transform:translate(-3px,0);opacity:.8} 93%{transform:translate(3px,0);opacity:.8} 96%{transform:translate(0);opacity:0} }
+  @keyframes glitchBot { 0%,88%,100%{transform:translate(0);opacity:0} 91%{transform:translate(3px,0);opacity:.7} 94%{transform:translate(-3px,0);opacity:.7} 97%{transform:translate(0);opacity:0} }
+
+  .splash-loading { display: flex; flex-direction: column; align-items: center; gap: 8px; opacity: 0; transform: translateY(8px) translateZ(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .splash-loading.in { opacity: 1; transform: translateY(0) translateZ(20px); }
+  .splash-loading-label { font-family: 'Share Tech Mono', monospace; font-size: clamp(9px, 1.3vw, 12px); color: #00f5ff; letter-spacing: 0.4em; text-transform: uppercase; text-shadow: 0 0 10px rgba(0, 245, 255, 0.7); }
+  .splash-bar-track { width: clamp(200px, 32vw, 360px); height: 5px; background: rgba(10, 21, 32, 0.8); border: 1px solid rgba(0, 245, 255, 0.4); box-shadow: 0 0 12px rgba(0, 245, 255, 0.2); border-radius: 3px; overflow: hidden; }
+  .splash-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #7b00ff, #00f5ff, #00ff9d); box-shadow: 0 0 12px #00f5ff; transition: width 0.25s ease-out; }
+  .splash-dots { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: #00f5ff88; letter-spacing: 0.3em; min-height: 14px; }
+  .splash-skip-hint { font-family: 'Share Tech Mono', monospace; font-size: clamp(9px, 1.2vw, 11px); color: rgba(0, 245, 255, 0.7); letter-spacing: 0.3em; text-transform: uppercase; margin-top: 6px; animation: skipPulse 2s ease-in-out infinite; transform: translateZ(25px); }
+  @keyframes skipPulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; color: #00ff9d; text-shadow: 0 0 10px #00ff9d; } }
+
+  /* ═══════════════ START SCREEN ═══════════════ */
+  #startScreen {
+    background: radial-gradient(ellipse at 50% 30%, #0c1826 0%, #04080e 70%);
+    justify-content: flex-start; overflow-y: auto; overflow-x: hidden; padding: 25px 0 40px;
+  }
+  #bgShooterCanvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+  .start-inner {
+    position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center;
+    gap: 16px; width: 100%; max-width: 440px; padding: 10px 20px;
+  }
+  .logo-title {
+    font-family: 'Orbitron', monospace; font-size: clamp(38px, 8vw, 68px); font-weight: 900;
+    letter-spacing: 0.12em; color: var(--accent); text-shadow: var(--glow), 0 0 60px rgba(0, 245, 255, 0.3);
+    text-align: center; line-height: 1.1;
+  }
+  .logo-sub {
+    font-family: 'Share Tech Mono', monospace; font-size: clamp(10px, 2vw, 13px);
+    color: var(--dim); letter-spacing: 0.35em; text-transform: uppercase; margin-top: 4px; text-align: center;
+  }
+
+  .start-form { display: flex; flex-direction: column; align-items: center; gap: 14px; width: 100%; max-width: 380px; }
+  .cyber-input {
+    width: 100%; background: rgba(9, 18, 29, 0.85); border: 1px solid var(--accent);
+    color: var(--accent); padding: 14px 18px; font-family: 'Share Tech Mono', monospace;
+    font-size: 16px; border-radius: 6px; outline: none; transition: box-shadow 0.3s, border-color 0.3s;
+    text-align: center; letter-spacing: 0.15em;
+  }
+  .cyber-input:focus { box-shadow: var(--glow); border-color: #fff; }
+  .cyber-input::placeholder { color: var(--dim); letter-spacing: 0.15em; }
+
+  .cyber-btn {
+    width: 100%; background: rgba(0, 245, 255, 0.08); border: 1px solid var(--accent);
+    color: var(--accent); padding: 15px 24px; font-family: 'Orbitron', monospace;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+    cursor: pointer; border-radius: 6px; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative; overflow: hidden; box-shadow: inset 0 0 10px rgba(0,245,255,0.1);
+  }
+  .cyber-btn::before {
+    content: ''; position: absolute; inset: 0; background: var(--accent);
+    transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); z-index: -1;
+  }
+  .cyber-btn:hover { color: #050a0f; box-shadow: 0 0 24px rgba(0,245,255,0.5); border-color: #fff; }
+  .cyber-btn:hover::before { transform: translateY(0); }
+  .cyber-btn.secondary { border-color: var(--accent2); color: var(--accent2); background: rgba(123, 0, 255, 0.08); }
+  .cyber-btn.secondary::before { background: var(--accent2); }
+  .cyber-btn.secondary:hover { color: #fff; box-shadow: 0 0 24px rgba(123,0,255,0.5); }
+  .cyber-btn.danger { border-color: var(--wrong); color: var(--wrong); background: rgba(255, 51, 102, 0.08); }
+  .cyber-btn.danger::before { background: var(--wrong); }
+  .cyber-btn.danger:hover { color: #fff; box-shadow: 0 0 24px rgba(255,51,102,0.5); }
+
+  .controls-card {
+    width: 100%; background: rgba(8, 16, 26, 0.6); border: 1px solid var(--panel-border);
+    border-radius: 8px; padding: 12px 14px; font-family: 'Share Tech Mono', monospace; font-size: 11px;
+    color: var(--dim); display: flex; flex-direction: column; gap: 6px;
+  }
+  .controls-row { display: flex; justify-content: space-between; align-items: center; }
+  .key-badge { background: rgba(0, 245, 255, 0.15); border: 1px solid var(--accent); color: var(--accent); padding: 2px 6px; border-radius: 3px; font-weight: bold; }
+
+  /* Partner buttons */
+  .partner-btns { display: flex; gap: 20px; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 4px; }
+  .partner-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 5px; background: transparent;
+    border: none; cursor: pointer; padding: 0; text-decoration: none; transition: transform 0.2s, filter 0.2s;
+  }
+  .partner-btn:hover { transform: scale(1.1); filter: brightness(1.25); }
+  .partner-btn img { width: 52px; height: 52px; object-fit: contain; display: block; }
+  .partner-btn span { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--dim); letter-spacing: 0.18em; text-transform: uppercase; }
+  .partner-btn:hover span { color: var(--accent); }
+
+  /* Top Left Cluster */
+  #topLeftCluster {
+    position: fixed; top: 12px; left: 12px; z-index: 800; display: flex; flex-direction: column; gap: 6px;
+    align-items: flex-start; pointer-events: none;
+    transition: all 0.3s ease;
+  }
+  /* In Game Mode: Move off the top HUD bar completely so the game menu bar is 100% visible and unblocked */
+  #topLeftCluster.in-game {
+    top: auto;
+    bottom: 16px;
+    left: 16px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    z-index: 200;
+  }
+  #topLeftCluster.in-game #linksMenu {
+    position: absolute;
+    bottom: 44px;
+    left: 0;
+    top: auto;
+  }
+  #topLeftCluster.in-game #linksBtn,
+  #topLeftCluster.in-game #infoBtn,
+  #topLeftCluster.in-game #muteBtn,
+  #topLeftCluster.in-game #musicBtn {
+    padding: 6px 12px;
+    font-size: 10px;
+    background: rgba(8, 16, 26, 0.75);
+    border-color: rgba(0, 245, 255, 0.25);
+  }
+  #topLeftCluster.in-game #linksBtn:hover,
+  #topLeftCluster.in-game #infoBtn:hover,
+  #topLeftCluster.in-game #muteBtn:hover,
+  #topLeftCluster.in-game #musicBtn:hover {
+    border-color: var(--accent);
+    background: rgba(8, 16, 26, 0.95);
+  }
+  #topLeftCluster > *, #topLeftCluster * { pointer-events: auto; }
+  #linksBtn, #infoBtn, #muteBtn, #musicBtn {
+    background: rgba(10, 21, 32, 0.7); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(0, 245, 255, 0.35); color: var(--accent);
+    padding: 8px 14px; font-family: 'Share Tech Mono', monospace; font-size: 11px;
+    cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    letter-spacing: 0.1em; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  #linksBtn:hover, #infoBtn:hover, #muteBtn:hover, #musicBtn:hover {
+    border-color: #fff; color: #fff; box-shadow: 0 0 16px rgba(0, 245, 255, 0.4);
+    background: rgba(10, 21, 32, 0.95); transform: translateY(-1px);
+  }
+  #linksMenu {
+    background: #080f17; border: 1px solid var(--accent2); box-shadow: 0 4px 24px rgba(123,0,255,0.4);
+    display: none; flex-direction: column; min-width: 210px; overflow: hidden; border-radius: 6px;
+  }
+  #linksMenu.open { display: flex; }
+  #linksMenu a {
+    font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--dim);
+    text-decoration: none; padding: 9px 14px; letter-spacing: 0.1em; border-bottom: 1px solid #0d1a28;
+    transition: all 0.15s; display: block;
+  }
+  #linksMenu a:last-child { border-bottom: none; }
+  #linksMenu a:hover { background: #0d1f30; color: var(--accent); padding-left: 20px; }
+  #soundBtns { display: none; gap: 5px; align-items: center; }
+  #soundBtns.show { display: flex; }
+  #musicBtn.muted { border-color: var(--dim); color: var(--dim); }
+
+  /* ═══════════════ GAME ARENA SCREEN ═══════════════ */
+  #gameScreen { display: block; background: var(--bg); padding: 0; overflow: hidden; position: fixed; inset: 0; }
+  #canvasWrapper { position: absolute; inset: 0; width: 100%; height: 100%; overflow: hidden; }
+  #gameCanvas { display: block; width: 100%; height: 100%; cursor: crosshair; }
+
+  /* Top HUD Bar */
+  #hudTop {
+    position: absolute; top: 12px; left: 16px; right: 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(8, 16, 26, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--panel-border); border-radius: 12px;
+    padding: 10px 18px; z-index: 100; pointer-events: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .hud-col { display: flex; flex-direction: column; }
+  .hud-label { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--dim); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 2px; }
+  .hud-value { font-family: 'Orbitron', monospace; font-size: 16px; font-weight: 700; color: var(--accent); text-shadow: var(--glow); line-height: 1.1; }
+
+  /* Health Hearts */
+  .lives-container { display: flex; gap: 8px; align-items: center; }
+  .life-heart {
+    font-size: 20px; color: #ff3366; text-shadow: 0 0 12px rgba(255, 51, 102, 0.8);
+    transition: all 0.3s ease; animation: heartBeat 1.8s ease-in-out infinite;
+  }
+  .life-heart.lost { color: #2a3b4c; text-shadow: none; filter: grayscale(1); transform: scale(0.85); animation: none; }
+  @keyframes heartBeat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.15); } 30% { transform: scale(1); } }
+
+  /* Level & Quota progress bar */
+  .quota-wrap { width: clamp(140px, 20vw, 240px); }
+  .quota-track { height: 6px; background: rgba(10, 22, 35, 0.8); border: 1px solid var(--border); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .quota-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #7b00ff, #00f5ff, #00ff9d); box-shadow: 0 0 8px #00f5ff; transition: width 0.3s ease-out; }
+
+  /* Active Powerup Chips */
+  #powerupBar {
+    position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 10px; z-index: 100; pointer-events: none;
+  }
+  .powerup-pill {
+    background: rgba(8, 16, 26, 0.8); border: 1px solid var(--accent);
+    padding: 6px 12px; border-radius: 20px; font-family: 'Share Tech Mono', monospace;
+    font-size: 11px; color: var(--accent); display: flex; align-items: center; gap: 6px;
+    box-shadow: 0 0 12px rgba(0, 245, 255, 0.4); animation: pillPulse 1s ease-in-out infinite alternate;
+  }
+  @keyframes pillPulse { from { opacity: 0.8; } to { opacity: 1; filter: brightness(1.2); } }
+
+  /* Red damage vignette flash */
+  #damageFlash {
+    position: fixed; inset: 0; pointer-events: none; z-index: 95;
+    background: radial-gradient(circle at center, transparent 40%, rgba(255, 0, 80, 0.4) 100%);
+    opacity: 0; transition: opacity 0.1s ease-out;
+  }
+  #damageFlash.active { opacity: 1; }
+
+  /* Mobile Virtual Controls */
+  #mobileControls {
+    position: fixed; inset: 0; pointer-events: none; z-index: 150; display: none;
+  }
+  .joystick-zone {
+    position: absolute; bottom: 25px; width: 140px; height: 140px; pointer-events: auto;
+    background: rgba(0, 245, 255, 0.05); border: 2px dashed rgba(0, 245, 255, 0.25); border-radius: 50%;
+  }
+  #leftJoy { left: 25px; }
+  #rightFireBtn {
+    position: absolute; bottom: 35px; right: 25px; width: 85px; height: 85px; pointer-events: auto;
+    background: rgba(255, 0, 110, 0.15); border: 2px solid var(--accent3); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-family: 'Orbitron', monospace;
+    font-size: 13px; font-weight: 900; color: var(--accent3); box-shadow: 0 0 16px rgba(255, 0, 110, 0.4);
+    user-select: none; -webkit-tap-highlight-color: transparent;
+  }
+  #rightFireBtn:active { background: rgba(255, 0, 110, 0.4); transform: scale(0.92); }
+
+  /* ═══════════════ CONSENSUS VERIFICATION TERMINAL ═══════════════ */
+  #consensusModal {
+    position: fixed; inset: 0; z-index: 1500;
+    background: rgba(3, 7, 12, 0.85); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  #consensusModal.show { display: flex; }
+  .terminal-card {
+    background: #08111d; border: 1.5px solid var(--accent); border-radius: 12px;
+    box-shadow: 0 0 40px rgba(0, 245, 255, 0.3), inset 0 0 20px rgba(0, 245, 255, 0.05);
+    width: 100%; max-width: 580px; max-height: 90vh; overflow-y: auto;
+    padding: 24px 26px; display: flex; flex-direction: column; gap: 14px;
+    animation: modalIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative;
+  }
+  @keyframes modalIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  .terminal-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid rgba(0, 245, 255, 0.2); padding-bottom: 12px; }
+  .terminal-title { font-family: 'Orbitron', monospace; font-size: 18px; font-weight: 900; color: var(--accent); text-shadow: var(--glow); letter-spacing: 0.1em; }
+  .terminal-tag { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--correct); border: 1px solid var(--correct); padding: 3px 8px; border-radius: 4px; letter-spacing: 0.15em; }
+  .question-prompt { font-family: 'Rajdhani', sans-serif; font-size: 20px; font-weight: 600; color: var(--text); line-height: 1.4; margin: 4px 0; }
+
+  .answers-grid { display: flex; flex-direction: column; gap: 9px; width: 100%; }
+  .answer-btn {
+    background: rgba(12, 25, 39, 0.7); border: 1px solid var(--border); border-radius: 6px;
+    padding: 12px 16px; font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--text);
+    cursor: pointer; transition: all 0.2s ease; text-align: left; display: flex; align-items: center; gap: 12px;
+  }
+  .answer-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); background: rgba(0, 245, 255, 0.12); transform: translateX(4px); }
+  .ans-key { background: rgba(0, 245, 255, 0.15); border: 1px solid var(--accent); color: var(--accent); border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: bold; flex-shrink: 0; }
+  .answer-btn.correct { background: rgba(0, 255, 157, 0.18) !important; border-color: var(--correct) !important; color: var(--correct) !important; box-shadow: 0 0 16px rgba(0,255,157,0.4); }
+  .answer-btn.wrong   { background: rgba(255, 51, 102, 0.18) !important; border-color: var(--wrong) !important; color: var(--wrong) !important; box-shadow: 0 0 16px rgba(255,51,102,0.4); }
+
+  .fact-container {
+    background: rgba(4, 9, 15, 0.8); border: 1px dashed var(--dim); border-radius: 6px;
+    padding: 12px 14px; font-family: 'Share Tech Mono', monospace; font-size: 11.5px; color: #a4c4d8;
+    line-height: 1.5; display: none;
+  }
+  .fact-container.show { display: block; animation: factSlide 0.3s ease; }
+  @keyframes factSlide { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .terminal-feedback {
+    font-family: 'Orbitron', monospace; font-size: 14px; font-weight: 700; letter-spacing: 0.1em;
+    min-height: 22px; display: flex; align-items: center;
+  }
+  .terminal-feedback.success { color: var(--correct); text-shadow: 0 0 10px rgba(0,255,157,0.6); }
+  .terminal-feedback.penalty { color: var(--wrong); text-shadow: 0 0 10px rgba(255,51,102,0.6); }
+
+  /* ═══════════════ GAME OVER SCREEN ═══════════════ */
+  #finishScreen {
+    background: radial-gradient(ellipse at 50% 30%, #1a050f 0%, #050a0f 70%);
+    gap: 16px; padding: 20px; overflow-y: auto;
+  }
+  .finish-title { font-family: 'Orbitron', monospace; font-size: clamp(32px, 7vw, 54px); font-weight: 900; color: var(--wrong); text-shadow: 0 0 24px rgba(255, 51, 102, 0.8); text-align: center; }
+  .finish-sub { font-family: 'Share Tech Mono', monospace; font-size: 12px; color: var(--dim); letter-spacing: 0.3em; text-transform: uppercase; margin-top: -6px; }
+
+  .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; max-width: 440px; }
+  .stat-card { background: rgba(10, 21, 32, 0.65); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; text-align: center; }
+  .stat-val { font-family: 'Orbitron', monospace; font-size: 22px; font-weight: 700; color: var(--accent); margin-top: 4px; }
+
+  /* ═══════════════ LEADERBOARD MODAL ═══════════════ */
+  #lbScreen {
+    background: radial-gradient(ellipse at 50% 20%, #0d0c24 0%, #050a0f 75%);
+    gap: 16px; padding: 20px;
+  }
+  .lb-title { font-family: 'Orbitron', monospace; font-size: 28px; font-weight: 900; color: var(--accent2); text-shadow: var(--glow2); text-align: center; }
+  .lb-table-container {
+    width: 100%; max-width: 580px; max-height: 55vh; overflow-y: auto;
+    background: rgba(8, 16, 26, 0.7); border: 1px solid var(--border); border-radius: 8px;
+  }
+  .lb-table { width: 100%; border-collapse: collapse; font-family: 'Share Tech Mono', monospace; font-size: 12px; text-align: left; }
+  .lb-table th { background: rgba(0, 245, 255, 0.1); color: var(--accent); padding: 10px 12px; border-bottom: 1px solid var(--border); letter-spacing: 0.1em; }
+  .lb-table td { padding: 9px 12px; border-bottom: 1px solid rgba(0, 245, 255, 0.08); color: var(--text); }
+  .lb-table tr:hover td { background: rgba(0, 245, 255, 0.05); }
+
+  /* ═══════════════ WHAT IS VOI INFO MODAL ═══════════════ */
+  .info-overlay {
+    position: fixed; inset: 0; z-index: 1600;
+    background: rgba(3, 7, 12, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .info-overlay.show { display: flex; }
+  .info-card {
+    background: #08111d; border: 1px solid var(--accent); border-radius: 12px;
+    width: 100%; max-width: 600px; max-height: 80vh; overflow-y: auto; padding: 24px 28px;
+    display: flex; flex-direction: column; gap: 14px; box-shadow: 0 0 35px rgba(0, 245, 255, 0.25);
+  }
+
+  @media (max-width: 720px) {
+    #mobileControls { display: block; }
+    .terminal-card { padding: 18px 16px; }
+    .question-prompt { font-size: 16px; }
+    .hud-value { font-size: 13px; }
+    .life-heart { font-size: 16px; }
+    #hudTop { padding: 8px 12px; }
+    #topLeftCluster.in-game {
+      bottom: auto;
+      top: 74px;
+      left: 12px;
+    }
+    #topLeftCluster.in-game #linksMenu {
+      position: absolute;
+      top: 36px;
+      bottom: auto;
+      left: 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ 3D SPLASH SCREEN ═══════════ -->
+<div id="splashScreen">
+  <canvas id="splashGridCanvas" class="splash-grid-bg"></canvas>
+  
+  <!-- Glowing Voi Logo in Background -->
+  <div class="splash-voi-backdrop">
+    <img src="voi-website.png" class="splash-voi-logo" alt="Voi Network Emblem">
+    <div class="splash-voi-aura"></div>
+    <div class="splash-voi-rings"></div>
+    <div class="splash-voi-sublabel">POWERED BY VOI BLOCKCHAIN</div>
+  </div>
+
+  <div class="splash-3d-stage">
+    <div class="splash-char-container">
+      <canvas id="splashChar" width="340" height="320"></canvas>
+    </div>
+    <div class="splash-text-wrap">
+      <div class="splash-welcome" id="splashWelcome">Blockchain Defense:</div>
+      <div class="splash-title"   id="splashTitle">VOI SHOOTER</div>
+      <div class="splash-credit"  id="splashCredit">
+        Code Purge Protocol &middot; Created by&nbsp;<span class="glitch" data-text="HattyHats">HattyHats</span>
+      </div>
+      <div class="splash-loading" id="splashLoading">
+        <div class="splash-loading-label" id="splashLoadLabel">INITIALIZING DEFENSE ENGINE</div>
+        <div class="splash-bar-track">
+          <div class="splash-bar-fill" id="splashBarFill"></div>
+        </div>
+        <div class="splash-dots" id="splashDots"></div>
+      </div>
+      <div class="splash-skip-hint" id="splashSkipHint">[ CLICK ANYWHERE OR PRESS SPACE TO START ]</div>
+    </div>
+  </div>
+</div>
+
+<!-- Top-Left Cluster -->
+<div id="topLeftCluster">
+  <div style="display: flex; gap: 5px;">
+    <button id="linksBtn">&#9776; LINKS <span class="arrow">&#9660;</span></button>
+    <button id="infoBtn">&#8505; WHAT IS VOI?</button>
+  </div>
+  <nav id="linksMenu">
+    <a href="https://earnwithhatty.com/" target="_blank" rel="noopener">Learn With Hatty</a>
+    <a href="https://hatty-universe.netlify.app/" target="_blank" rel="noopener">Hatty's Universe</a>
+    <a href="https://hattys-news.netlify.app/" target="_blank" rel="noopener">Hatty's News</a>
+    <a href="https://hattyhats.github.io/Open-Focus/" target="_blank" rel="noopener">Open Focus</a>
+    <a href="https://hatsquickpad.netlify.app/" target="_blank" rel="noopener">Quick-Pad</a>
+    <a href="https://hattyhats.github.io/local-cast/" target="_blank" rel="noopener">Local-Cast</a>
+    <a href="https://data-phone-app.onrender.com/" target="_blank" rel="noopener">Data-Phone</a>
+  </nav>
+  <div id="soundBtns">
+    <button id="musicBtn" title="Toggle Music">&#9834; MUSIC ON</button>
+    <button id="muteBtn">SFX ON</button>
+  </div>
+</div>
+
+<!-- Background music -->
+<audio id="bgMusic" src="classical-music.mp3" loop preload="auto"></audio>
+
+<!-- Red damage vignette -->
+<div id="damageFlash"></div>
+
+<!-- ═══════════ START SCREEN ═══════════ -->
+<div class="screen" id="startScreen">
+  <canvas id="bgShooterCanvas"></canvas>
+  <div class="start-inner">
+    <div style="text-align:center;">
+      <div class="logo-title">VOI SHOOTER</div>
+      <div class="logo-sub">CODE PURGE // PPoS CONSENSUS DEFENSE</div>
+    </div>
+
+    <div class="start-form">
+      <input class="cyber-input" id="playerName" placeholder="ENTER OPERATIVE CALLSIGN" maxlength="18" autocomplete="off" spellcheck="false">
+
+      <button class="cyber-btn" id="startBtn">ENGAGE CODE PURGE</button>
+      <button class="cyber-btn secondary" id="lbBtn">VIEW LEADERBOARD</button>
+
+      <div class="controls-card">
+        <div class="controls-row"><span>PILOT SHIP</span><span class="key-badge">WASD / ARROWS</span></div>
+        <div class="controls-row"><span>AIM & SHOOT</span><span class="key-badge">MOUSE + CLICK / SPACE</span></div>
+        <div class="controls-row"><span>CAMPAIGN</span><span style="color:var(--accent);">10 ESCALATING LEVELS + ENDLESS</span></div>
+        <div class="controls-row"><span>WAVE QUOTA</span><span>5 &middot; 10 &middot; 15... 50 BUGS</span></div>
+        <div class="controls-row"><span>SURVIVAL LIVES</span><span style="color:#ff3366">❤❤❤ (3 LIVES)</span></div>
+        <div class="controls-row"><span>CHECKPOINTS</span><span>VOI TRIVIA AT END OF LEVEL</span></div>
+      </div>
+    </div>
+
+    <!-- Partner buttons -->
+    <div class="partner-btns">
+      <a class="partner-btn" href="https://voi.network/" target="_blank" rel="noopener">
+        <img src="voi-website.png" alt="Voi Network" loading="lazy">
+        <span>VOI NETWORK</span>
+      </a>
+      <a class="partner-btn" href="https://fountain.voirewards.com/" target="_blank" rel="noopener">
+        <img src="voi-rewards.png" alt="Voi Rewards" loading="lazy">
+        <span>VOI REWARDS</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ GAME SCREEN ═══════════ -->
+<div class="screen hidden" id="gameScreen">
+  <div id="hudTop">
+    <div class="hud-col quota-wrap">
+      <div class="hud-label">LEVEL <span id="hudLevelNum" style="color:var(--accent);font-weight:bold;">1 / 10</span> // BUGS PURGED</div>
+      <div class="hud-value" style="font-size:14px;"><span id="hudLevelKills">0</span> / <span id="hudTargetKills">5</span></div>
+      <div class="quota-track">
+        <div class="quota-fill" id="hudQuotaFill"></div>
+      </div>
+    </div>
+
+    <div class="hud-col" style="align-items:center;">
+      <div class="hud-label">OPERATIVE SHIELD CORES</div>
+      <div class="lives-container" id="hudLives">
+        <span class="life-heart" id="heart0">&#10084;</span>
+        <span class="life-heart" id="heart1">&#10084;</span>
+        <span class="life-heart" id="heart2">&#10084;</span>
+      </div>
+    </div>
+
+    <div class="hud-col" style="align-items:center;">
+      <div class="hud-label">TIME SURVIVED</div>
+      <div class="hud-value" id="hudTimer" style="color:var(--warn);">00:00</div>
+    </div>
+
+    <div class="hud-col" style="align-items:flex-end;">
+      <div class="hud-label">TOTAL SCORE</div>
+      <div class="hud-value" id="hudScore">000,000</div>
+    </div>
+  </div>
+
+  <div id="canvasWrapper">
+    <canvas id="gameCanvas"></canvas>
+  </div>
+
+  <div id="powerupBar"></div>
+
+  <!-- Mobile On-Screen Controls -->
+  <div id="mobileControls">
+    <div class="joystick-zone" id="leftJoy"></div>
+    <button id="rightFireBtn">FIRE</button>
+  </div>
+</div>
+
+<!-- ═══════════ CONSENSUS VERIFICATION MODAL ═══════════ -->
+<div id="consensusModal">
+  <div class="terminal-card">
+    <div class="terminal-header">
+      <div>
+        <div class="terminal-title">CONSENSUS VERIFICATION</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:0.2em;margin-top:2px;">
+          LEVEL <span id="termLevelNum">1</span> PURGED &middot; BLOCKCHAIN CHECKPOINT
+        </div>
+      </div>
+      <div class="terminal-tag" id="termDiffTag">TIER 1: NOVICE</div>
+    </div>
+
+    <div class="question-prompt" id="termQuestionText">--</div>
+
+    <div class="answers-grid" id="termAnswersContainer"></div>
+
+    <div class="fact-container" id="termFactBox"></div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+      <div class="terminal-feedback" id="termFeedback"></div>
+      <button class="cyber-btn" id="termActionBtn" style="width:auto;padding:10px 20px;display:none;">CONTINUE</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ VICTORY SCREEN ═══════════ -->
+<div class="screen hidden" id="victoryScreen">
+  <div style="text-align:center;margin-bottom:6px;">
+    <div style="font-size:52px;filter:drop-shadow(0 0 24px #ffb800);margin-bottom:4px;">&#x1F3C6;</div>
+    <div class="finish-title" style="color:#ffb800;text-shadow:0 0 25px rgba(255,184,0,0.6);">NETWORK CONSENSUS SECURED</div>
+    <div class="finish-sub" style="color:var(--accent);">ALL 10 LEVELS PURGED // VOI BLOCKCHAIN FULLY LIBERATED</div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="hud-label">CAMPAIGN STATUS</div>
+      <div class="stat-val" id="vicLevel" style="color:var(--accent);font-size:16px;">LEVEL 10 // CONQUERED</div>
+    </div>
+    <div class="stat-card">
+      <div class="hud-label">TIME ELAPSED</div>
+      <div class="stat-val" id="vicTime" style="color:var(--warn);">00:00</div>
+    </div>
+    <div class="stat-card">
+      <div class="hud-label">TOTAL BUGS PURGED</div>
+      <div class="stat-val" id="vicKills" style="color:var(--accent3);">0 BUGS</div>
+    </div>
+    <div class="stat-card">
+      <div class="hud-label">CONSENSUS QUESTIONS</div>
+      <div class="stat-val" id="vicQuestions" style="color:var(--correct);">0 / 0</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin:6px 0 10px 0;">
+    <div class="hud-label">FINAL CAMPAIGN SCORE (+5,000 VICTORY BONUS)</div>
+    <div class="stat-val" id="vicScore" style="font-size:36px;color:#ffb800;text-shadow:0 0 20px rgba(255,184,0,0.5);">000,000</div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:10px;width:100%;max-width:440px;">
+    <button class="cyber-btn" id="vicEndlessBtn" style="background:linear-gradient(135deg,rgba(0,245,255,0.25),rgba(123,0,255,0.3));border-color:#00f5ff;">ENTER ENDLESS PROTOCOL (LVL 11+)</button>
+    <div style="display:flex;gap:10px;">
+      <button class="cyber-btn secondary" id="vicLbBtn">LEADERBOARD</button>
+      <button class="cyber-btn secondary" id="vicRestartBtn">PLAY AGAIN</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ GAME OVER SCREEN ═══════════ -->
+<div class="screen hidden" id="finishScreen">
+  <div class="finish-title">SYSTEM COMPROMISED</div>
+  <div class="finish-sub">MISSION TERMINATED // ZERO SHIELD CORES REMAINING</div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="hud-label">MAX LEVEL REACHED</div>
+      <div class="stat-val" id="statLevel">LVL 1</div>
+    </div>
+    <div class="stat-card">
+      <div class="hud-label">TIME SURVIVED</div>
+      <div class="stat-val" id="statTime" style="color:var(--warn);">00:00</div>
+    </div>
+    <div class="stat-card">
+      <div class="hud-label">BAD CODE PURGED</div>
+      <div class="stat-val" id="statKills" style="color:var(--accent3);">0 BUGS</div>
+    </div>
+    <div class="stat-card">
+      <div class="hud-label">CONSENSUS QUESTIONS</div>
+      <div class="stat-val" id="statQuestions" style="color:var(--correct);">0 / 0</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;">
+    <div class="hud-label">FINAL DEFENSE SCORE</div>
+    <div class="stat-val" id="statScore" style="font-size:32px;color:var(--accent);">000,000</div>
+  </div>
+
+  <div style="display:flex;gap:12px;width:100%;max-width:440px;">
+    <button class="cyber-btn" id="restartBtn">PURGE AGAIN</button>
+    <button class="cyber-btn secondary" id="lbFinishBtn">LEADERBOARD</button>
+  </div>
+</div>
+
+<!-- ═══════════ LEADERBOARD SCREEN ═══════════ -->
+<div class="screen hidden" id="lbScreen">
+  <div class="lb-title">HALL OF CONSENSUS DEFENDERS</div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--dim);letter-spacing:0.2em;text-transform:uppercase;">
+    RANKED BY SURVIVAL ENDURANCE &middot; LEVEL REACHED &middot; TIME SURVIVED
+  </div>
+
+  <div class="lb-table-container">
+    <table class="lb-table">
+      <thead>
+        <tr>
+          <th>RANK</th>
+          <th>OPERATIVE</th>
+          <th>MAX LEVEL</th>
+          <th>TIME SURVIVED</th>
+          <th>BUGS PURGED</th>
+          <th>FINAL SCORE</th>
+        </tr>
+      </thead>
+      <tbody id="lbTableBody">
+        <tr><td colspan="6" style="text-align:center;color:var(--dim);padding:20px;">LOADING ARCHIVES...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <button class="cyber-btn" id="lbCloseBtn" style="width:200px;">RETURN</button>
+</div>
+
+<!-- ═══════════ WHAT IS VOI INFO MODAL ═══════════ -->
+<div class="info-overlay" id="infoOverlay">
+  <div class="info-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--accent);padding-bottom:10px;">
+      <div style="font-family:'Orbitron',monospace;font-size:16px;font-weight:700;color:var(--accent);">VOI BLOCKCHAIN DOSSIER</div>
+      <button id="closeInfoBtn" style="background:none;border:none;color:var(--accent);font-size:18px;cursor:pointer;">&#x2715;</button>
+    </div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:12px;line-height:1.6;color:var(--text);">
+      <p><strong style="color:var(--accent);">VOI NETWORK</strong> is a community-owned Layer 1 blockchain powered by Algorand's groundbreaking Pure Proof of Stake (PPoS) consensus protocol.</p>
+      <br>
+      <p><strong style="color:var(--correct);">&#x25B6; 75% COMMUNITY ALLOCATION:</strong> Unlike traditional chains dominated by venture capital, Voi allocates 75% of its entire token supply to community members, builders, and node runners.</p>
+      <br>
+      <p><strong style="color:var(--accent);">&#x25B6; 2.8 SECOND FINALITY:</strong> Transactions achieve instantaneous, mathematical finality in under 3 seconds with zero forks and over 10,000 TPS throughput.</p>
+      <br>
+      <p><strong style="color:var(--warn);">&#x25B6; HOW TO PLAY VOI SHOOTER:</strong></p>
+      <ul style="padding-left:18px;margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+        <li>Control your ship with <strong>WASD / Arrow Keys</strong>.</li>
+        <li>Aim with the <strong>Mouse</strong> and hold <strong>Left Click or Space</strong> to fire.</li>
+        <li>Purge bad code bugs to hit each level's quota (5 on Level 1, 10 on Level 2, 15 on Level 3...).</li>
+        <li>Answer the Voi Blockchain consensus trivia question at the end of each wave.</li>
+        <li>You have <strong>3 Lives</strong> total. Protect them! Getting hit or answering trivia wrong loses a life.</li>
+        <li>Survive as many levels and as long as you can to top the Leaderboard!</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+// VOI SHOOTER: CODE PURGE - GAME ENGINE SCRIPT
+// ══════════════════════════════════════════════════════════════════════════
+
+// ── 1. QUESTIONS REPOSITORY (Tiered by Difficulty) ────────────────────────
+const QUESTIONS = [
+  // TIER 1 - NOVICE (Levels 1-2)
+  {
+    id: "q001", diff: 1, category: "tokenomics",
+    q: "What percentage of VOI tokens are allocated to the community?",
+    opts: ["50%", "60%", "75%", "90%"], a: 2,
+    fact: "VOI allocates 75% of all tokens to the community — one of the highest community allocations in blockchain history, ensuring decentralized ownership."
+  },
+  {
+    id: "q002", diff: 1, category: "consensus",
+    q: "What type of consensus mechanism does the Voi blockchain use?",
+    opts: ["Proof of Work (PoW)", "Proof of Stake (PoS)", "Delegated PoS", "Proof of Authority"], a: 1,
+    fact: "Voi uses Proof of Stake, where nodes with more staked tokens have higher probability of selection to propose blocks — energy-efficient and secure."
+  },
+  {
+    id: "q004", diff: 1, category: "tokenomics",
+    q: "Voi's economic architecture is planned to span how many years?",
+    opts: ["5 years", "10 years", "15 years", "20 years"], a: 3,
+    fact: "VOI's tokenomics are designed over 20 years to strategically mitigate inflation and protect long-term community participants."
+  },
+  {
+    id: "q005", diff: 1, category: "technology",
+    q: "What blockchain technology does Voi leverage for its consensus mechanism?",
+    opts: ["Ethereum EVM", "Algorand", "Polkadot Substrate", "Cosmos SDK"], a: 1,
+    fact: "Voi is built on Algorand's consensus technology, famous for its Pure Proof of Stake design with security and true decentralization."
+  },
+  {
+    id: "q007", diff: 1, category: "technology",
+    q: "What is Voi's approximate block time?",
+    opts: ["0.5 seconds", "2.8 seconds", "10 seconds", "30 seconds"], a: 1,
+    fact: "Voi's 2.8-second block time delivers near-instant transaction finality — crucial for high-speed dApps and gaming."
+  },
+  {
+    id: "q009", diff: 1, category: "governance",
+    q: "What governs Voi's ecosystem direction and investments?",
+    opts: ["A founding team of VCs", "The Voi Council, elected by token holders", "An appointed board of directors", "Automated smart contract governance"], a: 1,
+    fact: "Voi's Council is elected by token holders, ensuring those who contribute to the ecosystem directly shape its direction."
+  },
+  {
+    id: "q013", diff: 1, category: "technology",
+    q: "What does 'Layer 1 blockchain' mean in the context of Voi?",
+    opts: ["A blockchain built on top of Ethereum", "The base-level blockchain handling its own consensus and security", "A Layer 2 scaling solution", "A sidechain of Bitcoin"], a: 1,
+    fact: "A Layer 1 handles its own consensus, security, and settlement natively — Voi is sovereign and does not rely on foreign chains."
+  },
+  {
+    id: "q015", diff: 1, category: "community",
+    q: "What is the primary mission of the Voi Network?",
+    opts: ["To maximize investor returns", "To be a blockchain truly owned, run, and built by its community", "To compete on gas fees", "To replace traditional banking systems"], a: 1,
+    fact: "Voi's core motto is 'Built by You, Run by You, Owned by You' — community empowerment is foundational."
+  },
+
+  // TIER 2 - ADEPT (Levels 3-4)
+  {
+    id: "q003", diff: 2, category: "consensus",
+    q: "How are accounts selected to propose blocks in Voi's consensus?",
+    opts: ["Round-robin rotation", "Highest staker always wins", "Pseudorandom function weighted by stake", "Fixed validator set"], a: 2,
+    fact: "Every node runs a pseudorandom function (PRF) on staked accounts. More tokens increase selection chance while preserving randomness."
+  },
+  {
+    id: "q006", diff: 2, category: "technology",
+    q: "What is Voi's approximate transaction throughput (TPS)?",
+    opts: ["500 TPS", "1,000 TPS", "5,000 TPS", "Over 10,000 TPS"], a: 3,
+    fact: "Voi features over 10,000 TPS with 2.8-second block times, making it exceptionally fast for DeFi, NFTs, and interactive games."
+  },
+  {
+    id: "q008", diff: 2, category: "tokenomics",
+    q: "How much of Voi's total token supply was raised through private investors to launch?",
+    opts: ["1.73%", "10%", "25%", "40%"], a: 0,
+    fact: "Voi only leveraged 1.73% of total token supply through private investors — a record-low that prevents VC dominance."
+  },
+  {
+    id: "q010", diff: 2, category: "tokenomics",
+    q: "Over the first five years, what portion of tokens are dedicated to ecosystem and future growth?",
+    opts: ["10%", "25%", "50%", "75%"], a: 2,
+    fact: "50% of VOI tokens over 5 years are dedicated to ecosystem growth — funding developer grants, infrastructure, and tools."
+  },
+  {
+    id: "q011", diff: 2, category: "ecosystem",
+    q: "Which VC firms back Voi Network while respecting its community-first cap?",
+    opts: ["a16z and Sequoia", "Arrington Capital and Sonic Boom", "Pantera Capital and Multicoin", "Paradigm and Coinbase Ventures"], a: 1,
+    fact: "Arrington Capital and Sonic Boom back Voi's vision while accepting a capped 1.73% supply allocation."
+  },
+  {
+    id: "q012", diff: 2, category: "ecosystem",
+    q: "What web3 infrastructure partner did Voi join forces with for digital identity?",
+    opts: ["Chainlink", "Galxe", "The Graph", "Ceramic Network"], a: 1,
+    fact: "Voi partnered with Galxe for modular AI, digital identity management, and credential verification across Web3."
+  },
+  {
+    id: "q016", diff: 2, category: "tokenomics",
+    q: "In Voi's tokenomics, what are 'early incentives' designed to do?",
+    opts: ["Reward long-term holders after 10 years", "Front-load rewards to kickstart network growth within the first 18 months", "Compensate validators only", "Fund marketing campaigns"], a: 1,
+    fact: "Early incentives are fully allocated in the initial 18 months to bootstrap validator participation and dApp launches."
+  },
+  {
+    id: "q017", diff: 2, category: "ecosystem",
+    q: "Which platform hosted Voi's Incentivized Testnet?",
+    opts: ["Binance Launchpad", "CoinList", "Polkastarter", "Uniswap"], a: 1,
+    fact: "CoinList hosted Voi's Incentivized Testnet, rewarding validators and community testers for stress-testing the chain."
+  },
+
+  // TIER 3 - MASTER (Levels 5+)
+  {
+    id: "q014", diff: 3, category: "consensus",
+    q: "How many steps are required to write a single block to the Voi blockchain in one round?",
+    opts: ["1 step", "2 steps", "3 steps", "5 steps"], a: 2,
+    fact: "Three steps: block proposal, soft vote, and certify vote. Each involves distinct randomly selected account committees."
+  },
+  {
+    id: "q021", diff: 3, category: "governance",
+    q: "How can anyone in the Voi ecosystem receive tokens for contributing value?",
+    opts: ["Only through staking rewards", "By submitting proposals approved via community governance", "By purchasing on exchanges only", "Through fixed monthly airdrops"], a: 1,
+    fact: "Anyone can submit a proposal to community governance. Approved proposals receive token grants from ecosystem pools."
+  },
+  {
+    id: "q022", diff: 3, category: "technology",
+    q: "In Voi's consensus, what does a node propagate alongside a proposed block?",
+    opts: ["A zero-knowledge proof", "Cryptographic proof that the PRF selected that account", "A signature from all validators", "A hash of previous 10 blocks"], a: 1,
+    fact: "Nodes propagate the proposed block plus cryptographic PRF proof that their account was legitimately chosen."
+  },
+  {
+    id: "q024", diff: 3, category: "ecosystem",
+    q: "What does Voi's partnership with Galxe specifically enable for users?",
+    opts: ["Free transaction fees forever", "Digital credentials and identity management for Web3", "Unlimited NFT minting", "Cross-chain bridges to Solana"], a: 1,
+    fact: "Galxe enables robust digital credentials and verifiable on-chain reputation for Voi community participants."
+  },
+  {
+    id: "q025", diff: 3, category: "tokenomics",
+    q: "What mechanism prevents Voi's early investors from immediately selling their tokens?",
+    opts: ["There are no restrictions", "A structured vesting period for investor token allocations", "Tokens are permanently locked", "Community votes required per transfer"], a: 1,
+    fact: "Private and seed allocations are subject to multi-year structured vesting, aligning investor incentives with the network."
+  },
+  {
+    id: "q026", diff: 3, category: "consensus",
+    q: "In Voi's consensus round, which vote immediately follows the block proposal?",
+    opts: ["Soft vote", "Finality vote", "Stake validation vote", "Pre-commit vote"], a: 0,
+    fact: "After a block is proposed by the selected account, the network conducts a soft vote to agree on a single candidate proposal."
+  },
+  {
+    id: "q027", diff: 3, category: "consensus",
+    q: "What is the final voting step that permanently commits a block to the Voi ledger?",
+    opts: ["Certify vote", "Quorum tally", "Genesis proof", "Merkle check"], a: 0,
+    fact: "The certify vote is the third and final step, ensuring absolute finality with zero chain splits."
+  },
+  {
+    id: "q028", diff: 3, category: "technology",
+    q: "Why can't the Voi blockchain experience hard forks during normal operations?",
+    opts: ["Because it uses Pure Proof of Stake with deterministic instant finality", "Because mining pools coordinate forks", "Because forks are prohibited", "Because blocks are verified off-chain"], a: 0,
+    fact: "Voi's consensus guarantees that once a block is certified, it is immediately final — hard forks are mathematically impossible."
+  },
+  {
+    id: "q029", diff: 3, category: "technology",
+    q: "What standard ensures asset and token interoperability across the Voi ecosystem?",
+    opts: ["ARC standards (such as ARC-200 / ARC-72)", "ERC-20 only", "BEP-20", "SPL tokens"], a: 0,
+    fact: "Voi uses Algorand Request for Comments (ARC) standards such as ARC-200 and ARC-72 for robust, low-cost asset management."
+  },
+  {
+    id: "q030", diff: 3, category: "ecosystem",
+    q: "What bridge facilitates secure cross-chain asset transfers into the Voi ecosystem?",
+    opts: ["Aramid Bridge", "Wormhole Portal", "Stargate Finance", "Polygon PoS Bridge"], a: 0,
+    fact: "Aramid Bridge provides secure, decentralized cross-chain bridging connecting Voi with neighboring blockchain networks."
+  },
+  {
+    id: "q031", diff: 3, category: "consensus",
+    q: "How do Participation Keys in Voi's Pure Proof of Stake protect validator nodes?",
+    opts: [
+      "They are stored in plain text on the blockchain",
+      "They are ephemeral and rotatable, decoupling block proposing keys from spending keys",
+      "They give validators administrator control of the network",
+      "They automatically refund gas fees for validators"
+    ], a: 1,
+    fact: "Participation keys are separate from spending accounts and expire periodically. Even if a node is compromised, the attacker cannot steal the staked tokens."
+  },
+  {
+    id: "q032", diff: 3, category: "technology",
+    q: "What virtual machine execution environment does Voi use for smart contracts?",
+    opts: ["Ethereum Virtual Machine (EVM)", "Algorand Virtual Machine (AVM)", "WebAssembly (WASM) only", "Solana BPF"], a: 1,
+    fact: "Voi executes smart contracts on the Algorand Virtual Machine (AVM), providing deterministic Turing-complete smart contracts at micro-second speeds."
+  },
+  {
+    id: "q033", diff: 3, category: "consensus",
+    q: "What is the minimum stake required to run a participation node on the Voi blockchain?",
+    opts: ["32 ETH equivalent", "100,000 VOI", "1 VOI", "There is no minimum stake requirement (0.001+ VOI)"], a: 3,
+    fact: "Voi enables true decentralization by allowing anyone with any amount of VOI (even fractions) to run a participation node from a low-power device or Raspberry Pi."
+  },
+  {
+    id: "q034", diff: 3, category: "technology",
+    q: "What is ARC-200 on the Voi blockchain?",
+    opts: [
+      "A peer-to-peer bridge protocol",
+      "A smart contract token standard providing fungible token functionality similar to ERC-20",
+      "A hardware wallet specification",
+      "A mining algorithm"
+    ], a: 1,
+    fact: "ARC-200 is Voi's standard for fungible smart contract tokens, enabling decentralized exchanges and lending markets with built-in security."
+  },
+  {
+    id: "q035", diff: 3, category: "community",
+    q: "During its testnet phase, approximately how many community nodes joined Voi's consensus?",
+    opts: ["Under 50", "Over 300 community nodes", "Only 10 validator nodes", "Over 50,000 nodes"], a: 1,
+    fact: "Voi achieved over 300 active community-run participation nodes during incentivized testnet, making it one of the most decentralized emerging Layer 1 networks."
+  },
+  {
+    id: "q036", diff: 3, category: "security",
+    q: "Why is a 51% attack practically infeasible against Voi's Pure Proof of Stake?",
+    opts: [
+      "Because mining power is evenly distributed",
+      "Because attackers cannot predict which accounts will be selected for block proposal and voting committees",
+      "Because the blockchain shuts down automatically if attacks occur",
+      "Because only approved companies can vote"
+    ], a: 1,
+    fact: "Voi's consensus selects proposers and secret voting committees unpredictably via pseudorandom VRF. An attacker cannot know who to corrupt or target in advance."
+  }
+];
+
+// ── 2. AUDIO SYNTHESIZER ──────────────────────────────────────────────────
+class WebAudioEngine {
+  constructor() {
+    this.ctx = null;
+    this.muted = false;
+  }
+  init() {
+    if (this.ctx) return;
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) this.ctx = new AudioContext();
+    } catch(e){}
+  }
+  resume() {
+    if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  }
+  playLaser() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(880, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(120, this.ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(); osc.stop(this.ctx.currentTime + 0.12);
+    } catch(e){}
+  }
+  playExplosion() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(140, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.28);
+      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.28);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(); osc.stop(this.ctx.currentTime + 0.28);
+    } catch(e){}
+  }
+  playHit() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(320, this.ctx.currentTime);
+      osc.frequency.setValueAtTime(180, this.ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.18);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(); osc.stop(this.ctx.currentTime + 0.18);
+    } catch(e){}
+  }
+  playEmp() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(40, this.ctx.currentTime + 0.6);
+      gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.6);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(); osc.stop(this.ctx.currentTime + 0.6);
+    } catch(e){}
+  }
+  playCorrect() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const notes = [440, 554.37, 659.25, 880];
+      notes.forEach((freq, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.08);
+        gain.gain.setValueAtTime(0.18, this.ctx.currentTime + idx * 0.08);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + idx * 0.08 + 0.25);
+        osc.connect(gain); gain.connect(this.ctx.destination);
+        osc.start(this.ctx.currentTime + idx * 0.08);
+        osc.stop(this.ctx.currentTime + idx * 0.08 + 0.25);
+      });
+    } catch(e){}
+  }
+  playError() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(160, this.ctx.currentTime);
+      osc.frequency.setValueAtTime(110, this.ctx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.35);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(); osc.stop(this.ctx.currentTime + 0.35);
+    } catch(e){}
+  }
+  playPowerup() {
+    if (this.muted || !this.ctx) return;
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(350, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1050, this.ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+      osc.connect(gain); gain.connect(this.ctx.destination);
+      osc.start(); osc.stop(this.ctx.currentTime + 0.2);
+    } catch(e){}
+  }
+}
+const audio = new WebAudioEngine();
+
+// ── 3. STATE CONTROLLER ───────────────────────────────────────────────────
+const state = {
+  screen: 'splash',
+  inCheckpoint: false,
+  checkpointAnswered: false,
+  checkpointCountdown: null,
+  playerName: 'OPERATIVE',
+  shockwaves: [],
+  starfield: [],
+  level: 1,
+  levelKills: 0,
+  targetKills: 5,
+  totalKills: 0,
+  lives: 3,
+  score: 0,
+  startTime: 0,
+  timeSurvived: 0,
+  timerInterval: null,
+  animFrame: null,
+  activeQuestion: null,
+  questionsAnswered: 0,
+  questionsCorrect: 0,
+  usedQuestionIds: new Set(),
+  powerups: {
+    spreadUntil: 0,
+    freezeUntil: 0,
+    shieldUntil: 0
+  },
+  player: {
+    x: 400, y: 300, vx: 0, vy: 0, angle: 0,
+    speed: 5.2, radius: 18, invulnerableUntil: 0,
+    isShooting: false, lastShot: 0
+  },
+  bullets: [],
+  enemyBullets: [],
+  enemies: [],
+  drops: [],
+  particles: [],
+  floatingTexts: [],
+  screenShake: 0,
+  lastSpawnTime: 0,
+  keys: {},
+  mousePos: { x: 400, y: 300 },
+  isTouch: false
+};
+
+// ── 4. SPLASH SCREEN 3D VISUALS ───────────────────────────────────────────
+let splashAnimFrame = null;
+let splashGridFrame = null;
+let splashSkipped = false;
+
+function startSplashCyberGrid(canvasId) {
+  const c = document.getElementById(canvasId);
+  if (!c) return;
+  const cx = c.getContext('2d');
+  let t = 0;
+  function resize() { c.width = window.innerWidth; c.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function render() {
+    if (splashSkipped) return;
+    t += 0.015;
+    cx.fillStyle = '#02060b';
+    cx.fillRect(0, 0, c.width, c.height);
+
+    const horizonY = c.height * 0.44;
+    const vpX = c.width * 0.5;
+
+    // Horizon glow
+    const hGrad = cx.createRadialGradient(vpX, horizonY, 5, vpX, horizonY, c.width * 0.7);
+    hGrad.addColorStop(0, 'rgba(0, 245, 255, 0.4)');
+    hGrad.addColorStop(0.3, 'rgba(123, 0, 255, 0.25)');
+    hGrad.addColorStop(1, 'rgba(2, 6, 11, 0)');
+    cx.fillStyle = hGrad;
+    cx.fillRect(0, horizonY - 140, c.width, 280);
+
+    // Perspective lines
+    cx.strokeStyle = 'rgba(0, 245, 255, 0.35)';
+    cx.lineWidth = 1;
+    const numLines = 24;
+    for (let i = 0; i <= numLines; i++) {
+      const bottomX = (c.width / numLines) * i;
+      cx.beginPath();
+      cx.moveTo(vpX, horizonY);
+      cx.lineTo(bottomX, c.height);
+      cx.stroke();
+    }
+
+    // Moving horizontal grid pulses
+    const numHoriz = 16;
+    for (let j = 0; j < numHoriz; j++) {
+      const progress = ((j / numHoriz) + (t * 0.45) % 1) % 1;
+      const y = horizonY + Math.pow(progress, 2.2) * (c.height - horizonY);
+      const alpha = progress * 0.6;
+      cx.strokeStyle = `rgba(0, 245, 255, ${alpha})`;
+      cx.lineWidth = 1 + progress * 1.5;
+      cx.beginPath();
+      cx.moveTo(0, y);
+      cx.lineTo(c.width, y);
+      cx.stroke();
+    }
+
+    splashGridFrame = requestAnimationFrame(render);
+  }
+  render();
+}
+
+function startSplash3D() {
+  const c = document.getElementById('splashChar');
+  if (!c) return;
+  const cx = c.getContext('2d');
+  let sTime = 0;
+
+  function renderSplashFrame() {
+    if (splashSkipped) return;
+    sTime += 0.035;
+    cx.clearRect(0, 0, c.width, c.height);
+
+    const centerX = c.width / 2;
+    const centerY = c.height / 2;
+
+    // Glowing pedestal
+    cx.save();
+    cx.strokeStyle = 'rgba(0, 245, 255, 0.5)';
+    cx.lineWidth = 2;
+    cx.beginPath();
+    cx.ellipse(centerX, centerY + 80, 110, 28, 0, 0, Math.PI * 2);
+    cx.stroke();
+
+    // 3D Monolith
+    const cubeY = centerY - 20 + Math.sin(sTime * 2) * 8;
+    const sz = 38;
+
+    // Vertical beacon beam
+    const beamGrad = cx.createLinearGradient(centerX, cubeY - 120, centerX, cubeY + 120);
+    beamGrad.addColorStop(0, 'rgba(0, 245, 255, 0)');
+    beamGrad.addColorStop(0.5, 'rgba(0, 245, 255, 0.45)');
+    beamGrad.addColorStop(1, 'rgba(0, 245, 255, 0)');
+    cx.fillStyle = beamGrad;
+    cx.fillRect(centerX - 6, cubeY - 120, 12, 240);
+
+    // Rotating 3D Isometric Monolith
+    cx.save();
+    cx.translate(centerX, cubeY);
+    cx.shadowColor = '#00f5ff'; cx.shadowBlur = 20;
+
+    // Top face
+    cx.fillStyle = '#00f5ff';
+    cx.beginPath();
+    cx.moveTo(0, -sz);
+    cx.lineTo(sz * 0.86, -sz * 0.5);
+    cx.lineTo(0, 0);
+    cx.lineTo(-sz * 0.86, -sz * 0.5);
+    cx.closePath();
+    cx.fill();
+
+    // Voi "V" Emblem on Top Face
+    cx.strokeStyle = '#050a0f'; cx.lineWidth = 3.5;
+    cx.beginPath();
+    cx.moveTo(-sz * 0.38, -sz * 0.7);
+    cx.lineTo(0, -sz * 0.2);
+    cx.lineTo(sz * 0.38, -sz * 0.7);
+    cx.stroke();
+
+    // Left Face
+    cx.fillStyle = '#00838f';
+    cx.beginPath();
+    cx.moveTo(-sz * 0.86, -sz * 0.5);
+    cx.lineTo(0, 0);
+    cx.lineTo(0, sz);
+    cx.lineTo(-sz * 0.86, sz * 0.5);
+    cx.closePath();
+    cx.fill();
+
+    // Right Face
+    cx.fillStyle = '#00b4d8';
+    cx.beginPath();
+    cx.moveTo(sz * 0.86, -sz * 0.5);
+    cx.lineTo(0, 0);
+    cx.lineTo(0, sz);
+    cx.lineTo(sz * 0.86, sz * 0.5);
+    cx.closePath();
+    cx.fill();
+    cx.restore();
+
+    // Orbiting 3D Companion Drone
+    const dAngle = sTime * 1.6;
+    const drX = centerX + Math.cos(dAngle) * 90;
+    const drY = centerY - 10 + Math.sin(dAngle) * 30;
+    cx.fillStyle = '#00f5ff'; cx.shadowColor = '#00f5ff'; cx.shadowBlur = 12;
+    cx.beginPath(); cx.arc(drX, drY, 6, 0, Math.PI * 2); cx.fill();
+    cx.restore();
+
+    splashAnimFrame = requestAnimationFrame(renderSplashFrame);
+  }
+  renderSplashFrame();
+}
+
+function skipToStart() {
+  if (splashSkipped) return;
+  splashSkipped = true;
+  if (splashAnimFrame) cancelAnimationFrame(splashAnimFrame);
+  if (splashGridFrame) cancelAnimationFrame(splashGridFrame);
+  const splash = document.getElementById('splashScreen');
+  if (splash) {
+    splash.classList.add('fade-out');
+    setTimeout(() => {
+      splash.classList.add('gone');
+      showScreen('start');
+    }, 500);
+  } else {
+    showScreen('start');
+  }
+}
+
+async function runSplash() {
+  startSplash3D();
+  startSplashCyberGrid('splashGridCanvas');
+
+  const splashEl = document.getElementById('splashScreen');
+  if (splashEl) splashEl.addEventListener('click', skipToStart);
+  window.addEventListener('keydown', (e) => {
+    if (e.key === ' ' || e.key === 'Enter' || e.key === 'Escape') skipToStart();
+  }, { once: true });
+
+  // Initial stage: Glowing Voi Logo spotlight
+  await delay(600);
+  const sc = document.getElementById('splashChar');
+  if (sc) sc.classList.add('visible');
+
+  await delay(400);
+  fadeIn('splashWelcome');
+  await delay(400);
+  fadeIn('splashTitle');
+  await delay(350);
+  fadeIn('splashCredit');
+  await delay(350);
+  fadeIn('splashLoading');
+
+  // Smooth loading steps allowing full admiration of glowing Voi logo
+  const fill  = document.getElementById('splashBarFill');
+  const label = document.getElementById('splashLoadLabel');
+  const steps = [
+    { pct: 25,  txt: 'CONNECTING TO VOI PPoS NETWORK' },
+    { pct: 50,  txt: 'VERIFYING 2.8s FINALITY CONSENSUS' },
+    { pct: 75,  txt: 'SYNTHESIZING ARENA CYBERSPACE' },
+    { pct: 100, txt: 'VOI DEFENSE PROTOCOL ONLINE' }
+  ];
+  for (const step of steps) {
+    if (splashSkipped) break;
+    if (fill) fill.style.width = step.pct + '%';
+    if (label) label.textContent = step.txt;
+    await delay(700);
+  }
+
+  if (splashSkipped) return;
+  await delay(900); // Showcase completed glowing emblem
+  skipToStart();
+}
+
+function delay(ms) { return new Promise(res => setTimeout(res, ms)); }
+function fadeIn(id) { const el = document.getElementById(id); if (el) el.classList.add('in'); }
+
+// ── 5. SCREEN MANAGER ─────────────────────────────────────────────────────
+function showScreen(name) {
+  state.screen = name;
+  document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+  const target = document.getElementById(name + 'Screen');
+  if (target) target.classList.remove('hidden');
+
+  const soundBtns = document.getElementById('soundBtns');
+  if (soundBtns) soundBtns.classList.toggle('show', name === 'game');
+
+  const cluster = document.getElementById('topLeftCluster');
+  if (cluster) cluster.classList.toggle('in-game', name === 'game');
+
+  if (name === 'game') {
+    resizeCanvas();
+  }
+}
+
+// ── 6. GAME INITIALIZATION ────────────────────────────────────────────────
+function initShooterGame(name) {
+  audio.init(); audio.resume();
+  window.startGameMusic();
+
+  state.playerName = name || 'OPERATIVE';
+  state.level = 1;
+  state.levelKills = 0;
+  state.targetKills = 5;
+  state.totalKills = 0;
+  state.lives = 3;
+  state.score = 0;
+  state.timeSurvived = 0;
+  state.startTime = Date.now();
+  state.questionsAnswered = 0;
+  state.questionsCorrect = 0;
+  state.usedQuestionIds.clear();
+  state.powerups = { spreadUntil: 0, freezeUntil: 0, shieldUntil: 0 };
+  state.bullets = [];
+  state.enemyBullets = [];
+  state.enemies = [];
+  state.drops = [];
+  state.particles = [];
+  state.floatingTexts = [];
+  state.screenShake = 0;
+  state.lastSpawnTime = Date.now();
+  state.shockwaves = [];
+  state.starfield = [];
+  const initC = document.getElementById('gameCanvas');
+  const starW = initC ? initC.width : 1200;
+  const starH = initC ? initC.height : 800;
+  for (let s = 0; s < 45; s++) {
+    state.starfield.push({
+      x: Math.random() * starW,
+      y: Math.random() * starH,
+      speed: 0.2 + Math.random() * 0.6,
+      size: 0.8 + Math.random() * 1.6,
+      alpha: 0.3 + Math.random() * 0.7,
+      color: Math.random() < 0.65 ? '#00f5ff' : '#7b00ff'
+    });
+  }
+
+  showScreen('game');
+  resizeCanvas();
+
+  const c = document.getElementById('gameCanvas');
+  const spawnX = (c && c.width > 0) ? Math.round(c.width / 2) : Math.round(window.innerWidth / 2);
+  const spawnY = (c && c.height > 0) ? Math.round(c.height / 2) : Math.round(window.innerHeight / 2);
+
+  state.player.x = spawnX;
+  state.player.y = spawnY;
+  state.player.vx = 0;
+  state.player.vy = 0;
+  state.player.angle = -Math.PI / 2; // Face forward / up
+  state.mousePos.x = spawnX;
+  state.mousePos.y = spawnY - 140;   // Reticle positioned above ship
+  state.player.invulnerableUntil = Date.now() + 2500;
+
+  updateHUD();
+
+  if (state.timerInterval) clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(() => {
+    if (state.screen === 'game') {
+      state.timeSurvived = Math.floor((Date.now() - state.startTime) / 1000);
+      const m = String(Math.floor(state.timeSurvived / 60)).padStart(2, '0');
+      const s = String(state.timeSurvived % 60).padStart(2, '0');
+      const timerEl = document.getElementById('hudTimer');
+      if (timerEl) timerEl.textContent = `${m}:${s}`;
+    }
+  }, 1000);
+
+  if (state.animFrame) cancelAnimationFrame(state.animFrame);
+  gameLoop();
+}
+
+// ── 7. ENEMY SPAWNER & ARCHETYPES ─────────────────────────────────────────
+function spawnEnemy() {
+  const c = document.getElementById('gameCanvas');
+  if (!c) return;
+
+  // Spawn around canvas perimeter
+  let x, y;
+  if (Math.random() < 0.5) {
+    x = Math.random() < 0.5 ? -30 : c.width + 30;
+    y = Math.random() * c.height;
+  } else {
+    x = Math.random() * c.width;
+    y = Math.random() < 0.5 ? -30 : c.height + 30;
+  }
+
+  // Archetype selection based on Level (10 Escalating Levels + Boss)
+  const types = ['null'];
+  if (state.level >= 2) types.push('syntax');
+  if (state.level >= 3) types.push('memory');
+  if (state.level >= 4) types.push('loop');
+  if (state.level >= 5 && Math.random() < 0.28) types.push('fork');
+
+  let chosenType = types[Math.floor(Math.random() * types.length)];
+  let hp = 1, speed = 2.2 + Math.min(state.level * 0.12, 1.8), scoreVal = 100, radius = 16, symbol = '0x00', color = '#ff3366';
+
+  // Level 10 Grand Boss: The 51% Attack Singularity
+  if (state.level === 10 && !state.enemies.some(e => e.type === 'singularity') && state.levelKills < 48) {
+    chosenType = 'singularity';
+  }
+
+  if (chosenType === 'syntax') {
+    hp = 2; speed = 3.2 + Math.min(state.level * 0.12, 1.6); scoreVal = 200; radius = 14; symbol = '{;}'; color = '#ffb800';
+  } else if (chosenType === 'memory') {
+    hp = 3 + Math.floor(state.level / 2); speed = 1.6; scoreVal = 300; radius = 22; symbol = '[MEM]'; color = '#00cfff';
+  } else if (chosenType === 'loop') {
+    hp = 2; speed = 3.8; scoreVal = 350; radius = 15; symbol = '∞'; color = '#ff00a0';
+  } else if (chosenType === 'fork') {
+    hp = 8 + Math.min(state.level * 2, 20); speed = 1.2; scoreVal = 800; radius = 30; symbol = '0xFORK'; color = '#a855f7';
+  } else if (chosenType === 'singularity') {
+    hp = 48; speed = 0.95; scoreVal = 5000; radius = 42; symbol = '51% BOSS'; color = '#ff0055';
+  }
+
+  state.enemies.push({
+    id: Math.random().toString(36).substr(2, 9),
+    type: chosenType,
+    x, y, vx: 0, vy: 0,
+    hp, maxHp: hp, speed,
+    scoreVal, radius, symbol, color,
+    angle: 0,
+    shootTimer: Date.now() + Math.random() * 2000,
+    dashTimer: Date.now() + Math.random() * 3000,
+    isDashing: false
+  });
+}
+
+// ── 8. GAME LOOP & UPDATE ─────────────────────────────────────────────────
+function gameLoop() {
+  if (state.screen !== 'game') return;
+
+  try {
+    updateGame();
+    renderGame();
+  } catch (err) {
+    console.error('Game engine recovered from frame error:', err);
+  } finally {
+    if (state.screen === 'game') {
+      state.animFrame = requestAnimationFrame(gameLoop);
+    }
+  }
+}
+
+function updateGame() {
+  if (state.inCheckpoint) return; // Completely freeze game logic during trivia!
+  const now = Date.now();
+  const c = document.getElementById('gameCanvas');
+  if (!c) return;
+
+  // 1. Player Movement & Physics
+  let dx = 0, dy = 0;
+  if (state.keys['w'] || state.keys['ArrowUp']) dy -= 1;
+  if (state.keys['s'] || state.keys['ArrowDown']) dy += 1;
+  if (state.keys['a'] || state.keys['ArrowLeft']) dx -= 1;
+  if (state.keys['d'] || state.keys['ArrowRight']) dx += 1;
+
+  if (dx !== 0 && dy !== 0) {
+    const len = Math.sqrt(dx*dx + dy*dy);
+    dx /= len; dy /= len;
+  }
+
+  state.player.vx = state.player.vx * 0.8 + dx * state.player.speed * 0.2;
+  state.player.vy = state.player.vy * 0.8 + dy * state.player.speed * 0.2;
+  state.player.x += state.player.vx;
+  state.player.y += state.player.vy;
+
+  // Arena clamping
+  state.player.x = Math.max(state.player.radius, Math.min(c.width - state.player.radius, state.player.x));
+  state.player.y = Math.max(state.player.radius, Math.min(c.height - state.player.radius, state.player.y));
+
+  // Player angle towards mouse
+  state.player.angle = Math.atan2(state.mousePos.y - state.player.y, state.mousePos.x - state.player.x);
+
+  // Thruster particles
+  if (Math.abs(state.player.vx) > 0.5 || Math.abs(state.player.vy) > 0.5) {
+    state.particles.push({
+      x: state.player.x - Math.cos(state.player.angle) * 16,
+      y: state.player.y - Math.sin(state.player.angle) * 16,
+      vx: -Math.cos(state.player.angle) * 2 + (Math.random() - 0.5),
+      vy: -Math.sin(state.player.angle) * 2 + (Math.random() - 0.5),
+      life: 1, color: '#00f5ff', size: 3
+    });
+  }
+
+  // 2. Continuous Shooting
+  const fireRate = 140; // ms
+  if ((state.player.isShooting || state.keys[' ']) && now - state.player.lastShot > fireRate) {
+    state.player.lastShot = now;
+    audio.playLaser();
+
+    const isSpread = now < state.powerups.spreadUntil;
+    const angles = isSpread ? [state.player.angle - 0.22, state.player.angle, state.player.angle + 0.22] : [state.player.angle];
+
+    angles.forEach(ang => {
+      state.bullets.push({
+        x: state.player.x + Math.cos(ang) * 20,
+        y: state.player.y + Math.sin(ang) * 20,
+        vx: Math.cos(ang) * 14,
+        vy: Math.sin(ang) * 14,
+        life: 1, damage: 1, color: isSpread ? '#00ff9d' : '#00f5ff'
+      });
+    });
+
+    // Muzzle flash recoil
+    state.player.x -= Math.cos(state.player.angle) * 1.5;
+    state.player.y -= Math.sin(state.player.angle) * 1.5;
+  }
+
+  // 3. Update Bullets
+  for (let i = state.bullets.length - 1; i >= 0; i--) {
+    const b = state.bullets[i];
+    b.x += b.vx; b.y += b.vy;
+    if (b.x < 0 || b.x > c.width || b.y < 0 || b.y > c.height) {
+      state.bullets.splice(i, 1);
+    }
+  }
+
+  // 4. Update Enemy Bullets
+  for (let i = state.enemyBullets.length - 1; i >= 0; i--) {
+    const eb = state.enemyBullets[i];
+    eb.x += eb.vx; eb.y += eb.vy;
+
+    // Check hit player
+    const distToPlayer = Math.hypot(eb.x - state.player.x, eb.y - state.player.y);
+    if (distToPlayer < state.player.radius + 5) {
+      damagePlayer();
+      state.enemyBullets.splice(i, 1);
+      continue;
+    }
+
+    if (eb.x < 0 || eb.x > c.width || eb.y < 0 || eb.y > c.height) {
+      state.enemyBullets.splice(i, 1);
+    }
+  }
+
+  // 5. Spawn Enemies (Scale quota)
+  const isFrozen = now < state.powerups.freezeUntil;
+  const maxEnemiesOnScreen = 4 + state.level * 3;
+  const spawnCooldown = Math.max(500, 1500 - state.level * 100);
+  if (!isFrozen && state.enemies.length < maxEnemiesOnScreen && now - state.lastSpawnTime > spawnCooldown) {
+    state.lastSpawnTime = now;
+    spawnEnemy();
+  }
+
+  // 6. Update Enemies
+  for (let i = state.enemies.length - 1; i >= 0; i--) {
+    const e = state.enemies[i];
+
+    if (!isFrozen) {
+      // Enemy Movement AI
+      const toPlayerAng = Math.atan2(state.player.y - e.y, state.player.x - e.x);
+      e.angle = toPlayerAng;
+
+      if (e.type === 'syntax') {
+        // Erratic zig-zag
+        const perp = toPlayerAng + Math.PI / 2;
+        const wiggle = Math.sin(now * 0.008 + e.x) * 2.2;
+        e.x += Math.cos(toPlayerAng) * e.speed + Math.cos(perp) * wiggle;
+        e.y += Math.sin(toPlayerAng) * e.speed + Math.sin(perp) * wiggle;
+      } else if (e.type === 'loop') {
+        // Infinite Loop: High-speed agile mobius bug with serpentine strafe
+        const perp = toPlayerAng + Math.PI / 2;
+        const serpentine = Math.sin(now * 0.012 + e.x) * 3.6;
+        e.x += Math.cos(toPlayerAng) * e.speed + Math.cos(perp) * serpentine;
+        e.y += Math.sin(toPlayerAng) * e.speed + Math.sin(perp) * serpentine;
+      } else if (e.type === 'memory') {
+        // Slow advance + byte packet shot
+        e.x += Math.cos(toPlayerAng) * e.speed;
+        e.y += Math.sin(toPlayerAng) * e.speed;
+        if (now > e.shootTimer) {
+          e.shootTimer = now + 2400;
+          if (state.enemyBullets.length < 25) {
+            state.enemyBullets.push({
+              x: e.x, y: e.y,
+              vx: Math.cos(toPlayerAng) * 4.5,
+              vy: Math.sin(toPlayerAng) * 4.5,
+              color: '#00cfff'
+            });
+          }
+        }
+      } else if (e.type === 'fork') {
+        // Mini-boss 4-way bullet spread
+        e.x += Math.cos(toPlayerAng) * e.speed;
+        e.y += Math.sin(toPlayerAng) * e.speed;
+        if (now > e.shootTimer) {
+          e.shootTimer = now + 1800;
+          if (state.enemyBullets.length < 25) {
+            for (let a = 0; a < 4; a++) {
+              const bAng = toPlayerAng + (a * Math.PI / 2);
+              state.enemyBullets.push({
+                x: e.x, y: e.y,
+                vx: Math.cos(bAng) * 4.2,
+                vy: Math.sin(bAng) * 4.2,
+                color: '#a855f7'
+              });
+            }
+          }
+        }
+      } else if (e.type === 'singularity') {
+        // Level 10 Grand Boss: 3-way spread attack + gravitational advance
+        e.x += Math.cos(toPlayerAng) * e.speed;
+        e.y += Math.sin(toPlayerAng) * e.speed;
+        if (now > e.shootTimer) {
+          e.shootTimer = now + 1500;
+          if (state.enemyBullets.length < 30) {
+            [-0.28, 0, 0.28].forEach(offset => {
+              const bAng = toPlayerAng + offset;
+              state.enemyBullets.push({
+                x: e.x, y: e.y,
+                vx: Math.cos(bAng) * 4.5,
+                vy: Math.sin(bAng) * 4.5,
+                color: '#ff0055'
+              });
+            });
+          }
+        }
+      } else {
+        // Null pointer swarmer
+        e.x += Math.cos(toPlayerAng) * e.speed;
+        e.y += Math.sin(toPlayerAng) * e.speed;
+      }
+
+      // Check collision with player
+      const distToPlayer = Math.hypot(e.x - state.player.x, e.y - state.player.y);
+      if (distToPlayer < e.radius + state.player.radius) {
+        damagePlayer();
+        killEnemy(i);
+        continue;
+      }
+    }
+
+    // Check hit by player bullets
+    for (let j = state.bullets.length - 1; j >= 0; j--) {
+      const b = state.bullets[j];
+      const dist = Math.hypot(b.x - e.x, b.y - e.y);
+      if (dist < e.radius + 6) {
+        state.bullets.splice(j, 1);
+        e.hp -= b.damage;
+
+        // Spark particles
+        for (let p = 0; p < 4; p++) {
+          state.particles.push({
+            x: b.x, y: b.y,
+            vx: (Math.random() - 0.5) * 6, vy: (Math.random() - 0.5) * 6,
+            life: 0.6, color: e.color, size: 2.5
+          });
+        }
+
+        if (e.hp <= 0) {
+          killEnemy(i);
+          break;
+        }
+      }
+    }
+  }
+
+  // 7. Update Drops & Pickups (with 18s expiration)
+  for (let i = state.drops.length - 1; i >= 0; i--) {
+    const d = state.drops[i];
+    const age = now - (d.createdAt || now);
+    if (age > 18000) {
+      state.drops.splice(i, 1);
+      continue;
+    }
+    const dist = Math.hypot(d.x - state.player.x, d.y - state.player.y);
+    if (dist < state.player.radius + 18) {
+      applyPowerup(d.type);
+      state.drops.splice(i, 1);
+    }
+  }
+
+  // 8. Update Particles
+  for (let i = state.particles.length - 1; i >= 0; i--) {
+    const p = state.particles[i];
+    p.x += p.vx; p.y += p.vy;
+    p.life -= 0.025;
+    if (p.life <= 0) state.particles.splice(i, 1);
+  }
+
+  // 9. Update Floating Texts
+  for (let i = state.floatingTexts.length - 1; i >= 0; i--) {
+    const ft = state.floatingTexts[i];
+    ft.y -= 1;
+    ft.life -= 0.02;
+    if (ft.life <= 0) state.floatingTexts.splice(i, 1);
+  }
+
+  // 10. Update HUD & Powerup Bars
+  updatePowerupUI();
+}
+
+function killEnemy(idx) {
+  const e = state.enemies[idx];
+  if (!e) return;
+  state.enemies.splice(idx, 1);
+
+  audio.playExplosion();
+  // Add expanding shockwave ring
+  if (!state.shockwaves) state.shockwaves = [];
+  state.shockwaves.push({
+    x: e.x, y: e.y, radius: 4, speed: 5, life: 1, width: 3, color: e.color
+  });
+
+  // Burst particles
+  for (let p = 0; p < 12; p++) {
+    state.particles.push({
+      x: e.x, y: e.y,
+      vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8,
+      life: 0.8, color: e.color, size: 3.5
+    });
+  }
+
+  // Floating score
+  state.score += e.scoreVal;
+  state.levelKills++;
+  state.totalKills++;
+
+  state.floatingTexts.push({
+    x: e.x, y: e.y,
+    text: `+${e.scoreVal}`,
+    color: e.color, life: 1
+  });
+
+  // 18% Chance to drop powerup core (capped to 6 concurrent drops)
+  if (Math.random() < 0.18 && state.drops.length < 6) {
+    const types = ['spread', 'emp', 'freeze', 'shield'];
+    const pType = types[Math.floor(Math.random() * types.length)];
+    state.drops.push({
+      x: e.x, y: e.y, type: pType, angle: 0,
+      createdAt: Date.now()
+    });
+  }
+
+  updateHUD();
+
+  // CHECK LEVEL QUOTA COMPLETION
+  if (state.levelKills >= state.targetKills) {
+    triggerConsensusCheckpoint();
+  }
+}
+
+function damagePlayer() {
+  if (state.inCheckpoint) return; // 100% invulnerable during trivia!
+  const now = Date.now();
+  if (now < state.player.invulnerableUntil || now < state.powerups.shieldUntil) return;
+
+  state.player.invulnerableUntil = now + 1500; // 1.5s invulnerability
+  state.lives--;
+  audio.playHit();
+
+  // Screen shake & damage vignette
+  state.screenShake = 16;
+  const flash = document.getElementById('damageFlash');
+  if (flash) {
+    flash.classList.add('active');
+    setTimeout(() => flash.classList.remove('active'), 250);
+  }
+
+  updateHUD();
+
+  if (state.lives <= 0) {
+    gameOver();
+  }
+}
+
+function applyPowerup(type) {
+  audio.playPowerup();
+  const now = Date.now();
+  if (type === 'spread') {
+    state.powerups.spreadUntil = now + 10000;
+    state.floatingTexts.push({ x: state.player.x, y: state.player.y - 20, text: 'TRIPLE BLASTER ENGAGED!', color: '#00ff9d', life: 1.2 });
+  } else if (type === 'emp') {
+    audio.playEmp();
+    state.screenShake = 24;
+    // Destroy all enemies on screen
+    for (let i = state.enemies.length - 1; i >= 0; i--) {
+      killEnemy(i);
+    }
+    state.enemyBullets = [];
+    state.floatingTexts.push({ x: state.player.x, y: state.player.y - 20, text: 'EMP SMART BOMB DISCHARGE!', color: '#ff006e', life: 1.5 });
+  } else if (type === 'freeze') {
+    state.powerups.freezeUntil = now + 5000;
+    state.floatingTexts.push({ x: state.player.x, y: state.player.y - 20, text: 'CRYO PROTOCOL: BUGS FROZEN!', color: '#00cfff', life: 1.2 });
+  } else if (type === 'shield') {
+    state.powerups.shieldUntil = now + 8000;
+    state.floatingTexts.push({ x: state.player.x, y: state.player.y - 20, text: 'FORCEFIELD BARRIER ONLINE!', color: '#7b00ff', life: 1.2 });
+  }
+}
+
+// ── 9. CONSENSUS TRIVIA CHECKPOINT (End of Level) ─────────────────────────
+function triggerConsensusCheckpoint() {
+  if (state.inCheckpoint || state.screen !== 'game') return;
+  state.inCheckpoint = true;
+  state.checkpointAnswered = false;
+  if (state.checkpointCountdown) { clearInterval(state.checkpointCountdown); state.checkpointCountdown = null; }
+
+  // Clear all enemies, bullets, and enemy bullets
+  state.enemies = [];
+  state.enemyBullets = [];
+  state.bullets = [];
+
+  // Protect player completely during trivia
+  state.player.invulnerableUntil = Infinity;
+
+  // Pick question matching difficulty tier
+  let targetTier = 1;
+  if (state.level >= 5) targetTier = 3;
+  else if (state.level >= 3) targetTier = 2;
+
+  let pool = QUESTIONS.filter(q => q.diff === targetTier && !state.usedQuestionIds.has(q.id));
+  if (pool.length === 0) {
+    pool = QUESTIONS.filter(q => q.diff === targetTier);
+  }
+  const q = pool[Math.floor(Math.random() * pool.length)] || QUESTIONS[0];
+  state.activeQuestion = q;
+  state.usedQuestionIds.add(q.id);
+
+  // Render modal
+  const modal = document.getElementById('consensusModal');
+  const levelNumEl = document.getElementById('termLevelNum');
+  const diffTag = document.getElementById('termDiffTag');
+  const qText = document.getElementById('termQuestionText');
+  const ansBox = document.getElementById('termAnswersContainer');
+  const factBox = document.getElementById('termFactBox');
+  const feedback = document.getElementById('termFeedback');
+  const actionBtn = document.getElementById('termActionBtn');
+
+  if (levelNumEl) levelNumEl.textContent = state.level;
+  if (diffTag) {
+    diffTag.textContent = targetTier === 1 ? 'TIER 1: NOVICE' : targetTier === 2 ? 'TIER 2: ADEPT' : 'TIER 3: MASTER';
+    diffTag.style.color = targetTier === 1 ? 'var(--correct)' : targetTier === 2 ? 'var(--accent)' : 'var(--accent3)';
+    diffTag.style.borderColor = diffTag.style.color;
+  }
+  if (qText) qText.textContent = q.q;
+  if (factBox) { factBox.className = 'fact-container'; factBox.innerHTML = ''; }
+  if (feedback) { feedback.className = 'terminal-feedback'; feedback.textContent = ''; }
+  if (actionBtn) actionBtn.style.display = 'none';
+
+  if (ansBox) {
+    ansBox.innerHTML = '';
+    const keys = ['1', '2', '3', '4'];
+    q.opts.forEach((opt, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'answer-btn';
+      btn.innerHTML = `<span class="ans-key">${keys[idx]}</span> <span>${opt}</span>`;
+      btn.onclick = () => selectConsensusAnswer(idx);
+      ansBox.appendChild(btn);
+    });
+  }
+
+  if (modal) modal.classList.add('show');
+}
+
+function selectConsensusAnswer(selectedIndex) {
+  if (!state.inCheckpoint || state.checkpointAnswered) return;
+  state.checkpointAnswered = true;
+
+  const q = state.activeQuestion;
+  if (!q) return;
+
+  const ansBox = document.getElementById('termAnswersContainer');
+  const factBox = document.getElementById('termFactBox');
+  const feedback = document.getElementById('termFeedback');
+  const actionBtn = document.getElementById('termActionBtn');
+
+  // Disable all answer buttons
+  if (ansBox && ansBox.children) {
+    Array.from(ansBox.children).forEach((btn, idx) => {
+      btn.disabled = true;
+      if (idx === q.a) btn.classList.add('correct');
+      if (idx === selectedIndex && idx !== q.a) btn.classList.add('wrong');
+    });
+  }
+
+  state.questionsAnswered++;
+  const isCorrect = (selectedIndex === q.a);
+
+  if (isCorrect) {
+    state.questionsCorrect++;
+    const bonus = 1000 * state.level;
+    state.score += bonus;
+    audio.playCorrect();
+    if (feedback) {
+      feedback.className = 'terminal-feedback success';
+      feedback.textContent = `CONSENSUS VALIDATED! +${bonus.toLocaleString()} PTS`;
+    }
+  } else {
+    state.lives--;
+    audio.playError();
+    updateHUD();
+    if (feedback) {
+      feedback.className = 'terminal-feedback penalty';
+      feedback.textContent = `CONSENSUS BREACH: -1 LIFE DEDUCTED!`;
+    }
+  }
+
+  // Show educational fact
+  if (factBox) {
+    factBox.classList.add('show');
+    factBox.innerHTML = `<strong>VOI ARCHITECTURE RECORD:</strong> ${q.fact}`;
+  }
+
+  // Advance or Game Over action button with auto-advance countdown
+  if (actionBtn) {
+    actionBtn.style.display = 'block';
+    if (state.lives <= 0) {
+      // Auto-advance countdown on game over so screen NEVER sits frozen!
+      let failSeconds = 3;
+      actionBtn.textContent = `SYSTEM SHUTDOWN (${failSeconds}s) [SPACE/ENTER]`;
+      actionBtn.className = 'cyber-btn danger';
+      actionBtn.onclick = () => {
+        if (state.checkpointCountdown) clearInterval(state.checkpointCountdown);
+        state.checkpointCountdown = null;
+        const modal = document.getElementById('consensusModal');
+        if (modal) modal.classList.remove('show');
+        state.inCheckpoint = false;
+        gameOver();
+      };
+
+      state.checkpointCountdown = setInterval(() => {
+        failSeconds--;
+        if (failSeconds <= 0) {
+          if (state.checkpointCountdown) clearInterval(state.checkpointCountdown);
+          state.checkpointCountdown = null;
+          const modal = document.getElementById('consensusModal');
+          if (modal) modal.classList.remove('show');
+          state.inCheckpoint = false;
+          gameOver();
+        } else {
+          actionBtn.textContent = `SYSTEM SHUTDOWN (${failSeconds}s) [SPACE/ENTER]`;
+        }
+      }, 1000);
+    } else {
+      // If Level 10 was completed successfully, celebrate Grand Campaign Victory!
+      if (state.level === 10) {
+        let winSeconds = 3;
+        actionBtn.textContent = `CLAIM CAMPAIGN VICTORY (${winSeconds}s) [SPACE/ENTER]`;
+        actionBtn.className = 'cyber-btn';
+        actionBtn.onclick = () => {
+          if (state.checkpointCountdown) clearInterval(state.checkpointCountdown);
+          state.checkpointCountdown = null;
+          triggerCampaignVictory();
+        };
+
+        state.checkpointCountdown = setInterval(() => {
+          winSeconds--;
+          if (winSeconds <= 0) {
+            if (state.checkpointCountdown) clearInterval(state.checkpointCountdown);
+            state.checkpointCountdown = null;
+            triggerCampaignVictory();
+          } else {
+            actionBtn.textContent = `CLAIM CAMPAIGN VICTORY (${winSeconds}s) [SPACE/ENTER]`;
+          }
+        }, 1000);
+      } else {
+        let secondsLeft = 3;
+        actionBtn.textContent = `ENGAGE LEVEL ${state.level + 1} (${secondsLeft}s) [SPACE/ENTER]`;
+        actionBtn.className = 'cyber-btn';
+
+        actionBtn.onclick = () => {
+          if (state.checkpointCountdown) clearInterval(state.checkpointCountdown);
+          state.checkpointCountdown = null;
+          advanceToNextLevel();
+        };
+
+        state.checkpointCountdown = setInterval(() => {
+          secondsLeft--;
+          if (secondsLeft <= 0) {
+            if (state.checkpointCountdown) clearInterval(state.checkpointCountdown);
+            state.checkpointCountdown = null;
+            advanceToNextLevel();
+          } else {
+            actionBtn.textContent = `ENGAGE LEVEL ${state.level + 1} (${secondsLeft}s) [SPACE/ENTER]`;
+          }
+        }, 1000);
+      }
+    }
+  }
+}
+
+function advanceToNextLevel() {
+  if (!state.inCheckpoint) return; // Strict re-entrancy safeguard
+  state.inCheckpoint = false;
+  state.checkpointAnswered = false;
+
+  if (state.checkpointCountdown) clearInterval(state.checkpointCountdown);
+  state.checkpointCountdown = null;
+
+  const modal = document.getElementById('consensusModal');
+  if (modal) modal.classList.remove('show');
+
+  // Clear input states to prevent stuck firing/movement
+  state.keys = {};
+  state.player.isShooting = false;
+  state.player.vx = 0;
+  state.player.vy = 0;
+
+  // Clean all combat entities so the new level starts fresh and fast
+  state.enemies = [];
+  state.enemyBullets = [];
+  state.bullets = [];
+  state.drops = [];
+  state.particles = [];
+  state.shockwaves = [];
+
+  state.level++;
+  state.levelKills = 0;
+  state.targetKills = state.level * 5; // Escalating quota: 5, 10, 15, 20... 50
+  state.lastSpawnTime = Date.now() - 400; // Spawn first enemy wave immediately (no barren freeze)
+
+  // Center player
+  const c = document.getElementById('gameCanvas');
+  if (c) {
+    state.player.x = Math.round(c.width / 2);
+    state.player.y = Math.round(c.height / 2);
+  }
+  state.player.invulnerableUntil = Date.now() + 3000; // 3 seconds invulnerability shield
+
+  // Floating level notification
+  const levelText = state.level <= 10 ? `LEVEL ${state.level} / 10 ENGAGED! TARGET: ${state.targetKills} BUGS` : `ENDLESS LEVEL ${state.level}! TARGET: ${state.targetKills} BUGS`;
+  state.floatingTexts.push({
+    x: state.player.x, y: state.player.y - 35,
+    text: levelText,
+    color: state.level === 10 ? '#ff0055' : '#00f5ff', life: 2.5
+  });
+
+  updateHUD();
+}
+
+function triggerCampaignVictory() {
+  if (state.checkpointCountdown) clearInterval(state.checkpointCountdown);
+  state.checkpointCountdown = null;
+  const modal = document.getElementById('consensusModal');
+  if (modal) modal.classList.remove('show');
+  state.inCheckpoint = false;
+  state.checkpointAnswered = false;
+
+  if (state.timerInterval) clearInterval(state.timerInterval);
+  if (state.animFrame) cancelAnimationFrame(state.animFrame);
+  window.stopGameMusic();
+
+  // 5,000 Grand Campaign Victory Bonus
+  const victoryBonus = 5000;
+  state.score += victoryBonus;
+
+  // Populate Victory Screen
+  const vicLvl = document.getElementById('vicLevel');
+  const vicT = document.getElementById('vicTime');
+  const vicK = document.getElementById('vicKills');
+  const vicQ = document.getElementById('vicQuestions');
+  const vicS = document.getElementById('vicScore');
+
+  if (vicLvl) vicLvl.textContent = 'LEVEL 10 // CONQUERED';
+  const m = String(Math.floor(state.timeSurvived / 60)).padStart(2, '0');
+  const s = String(state.timeSurvived % 60).padStart(2, '0');
+  if (vicT) vicT.textContent = `${m}:${s}`;
+  if (vicK) vicK.textContent = `${state.totalKills} BUGS`;
+  if (vicQ) vicQ.textContent = `${state.questionsCorrect} / ${state.questionsAnswered}`;
+  if (vicS) vicS.textContent = state.score.toLocaleString();
+
+  saveScore({
+    name: state.playerName,
+    level: 10,
+    timeSurvived: state.timeSurvived,
+    kills: state.totalKills,
+    score: state.score,
+    date: new Date().toISOString()
+  });
+  if (fbConnected && db && window._fbPush && window._fbRef) {
+    window._fbPush(window._fbRef(db, 'voi_shooter_leaderboard'), {
+      name: state.playerName,
+      level: 10,
+      timeSurvived: state.timeSurvived,
+      kills: state.totalKills,
+      score: state.score,
+      date: new Date().toISOString()
+    }).catch(()=>{});
+  }
+
+  showScreen('victory');
+}
+
+function enterEndlessMode() {
+  state.inCheckpoint = false;
+  state.checkpointAnswered = false;
+  state.level = 11;
+  state.levelKills = 0;
+  state.targetKills = state.level * 5; // 55 kills
+  state.lastSpawnTime = Date.now() - 400;
+
+  state.keys = {};
+  state.player.isShooting = false;
+  state.player.vx = 0;
+  state.player.vy = 0;
+  state.player.invulnerableUntil = Date.now() + 3000;
+
+  const c = document.getElementById('gameCanvas');
+  if (c) {
+    state.player.x = Math.round(c.width / 2);
+    state.player.y = Math.round(c.height / 2);
+  }
+
+  state.enemies = [];
+  state.bullets = [];
+  state.enemyBullets = [];
+  state.drops = [];
+  state.shockwaves = [];
+  state.particles = [];
+
+  showScreen('game');
+  updateHUD();
+
+  state.floatingTexts.push({
+    x: state.player.x, y: state.player.y - 35,
+    text: 'ENDLESS OVERDRIVE PROTOCOL ENGAGED // LVL 11',
+    color: '#ff00a0', life: 3.0
+  });
+
+  if (state.timerInterval) clearInterval(state.timerInterval);
+  state.timerInterval = setInterval(() => {
+    if (state.screen === 'game') {
+      state.timeSurvived = Math.floor((Date.now() - state.startTime) / 1000);
+      const m = String(Math.floor(state.timeSurvived / 60)).padStart(2, '0');
+      const s = String(state.timeSurvived % 60).padStart(2, '0');
+      const timerEl = document.getElementById('hudTimer');
+      if (timerEl) timerEl.textContent = `${m}:${s}`;
+    }
+  }, 1000);
+
+  window.startGameMusic();
+  if (state.animFrame) cancelAnimationFrame(state.animFrame);
+  gameLoop();
+}
+
+
+// ── FIREBASE CLOUD LEADERBOARD SYNC ──────────────────────────────────────
+let db = null, fbConnected = false, cloudLeaderboardEntries = [];
+
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB-VrU5jFDwl_OUdxJ4xTm7G7Vx0okm-tk",
+  authDomain: "voi-shooter.firebaseapp.com",
+  databaseURL: "https://voi-shooter-default-rtdb.firebaseio.com",
+  projectId: "voi-shooter",
+  storageBucket: "voi-shooter.firebasestorage.app",
+  messagingSenderId: "488358454270",
+  appId: "1:488358454270:web:6ad56e858dc003c39156af",
+  measurementId: "G-CFP00CLGVG"
+};
+
+async function initFirebase() {
+  try {
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+    const { getDatabase, ref, push, onValue, query, limitToLast } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js');
+    const app = initializeApp(FIREBASE_CONFIG);
+    db = getDatabase(app);
+    fbConnected = true;
+    window._fbPush = push;
+    window._fbRef = ref;
+    const lbRef = query(ref(db, 'voi_shooter_leaderboard'), limitToLast(100));
+    onValue(lbRef, snap => {
+      const data = snap.val() || {};
+      cloudLeaderboardEntries = Object.values(data);
+    });
+  } catch(e) {
+    // Graceful offline fallback
+  }
+}
+
+// ── 10. GAME OVER & LEADERBOARD ───────────────────────────────────────────
+function gameOver() {
+  if (state.timerInterval) clearInterval(state.timerInterval);
+  if (state.animFrame) cancelAnimationFrame(state.animFrame);
+  window.stopGameMusic();
+
+  document.getElementById('statLevel').textContent = `LVL ${state.level}`;
+  const m = String(Math.floor(state.timeSurvived / 60)).padStart(2, '0');
+  const s = String(state.timeSurvived % 60).padStart(2, '0');
+  document.getElementById('statTime').textContent = `${m}:${s}`;
+  document.getElementById('statKills').textContent = `${state.totalKills} BUGS`;
+  document.getElementById('statQuestions').textContent = `${state.questionsCorrect} / ${state.questionsAnswered}`;
+  document.getElementById('statScore').textContent = state.score.toLocaleString();
+
+  saveScore({
+    name: state.playerName,
+    level: state.level,
+    timeSurvived: state.timeSurvived,
+    kills: state.totalKills,
+    score: state.score,
+    date: new Date().toISOString()
+  });
+  if (fbConnected && db && window._fbPush && window._fbRef) {
+    window._fbPush(window._fbRef(db, 'voi_shooter_leaderboard'), {
+      name: state.playerName,
+      level: state.level,
+      timeSurvived: state.timeSurvived,
+      kills: state.totalKills,
+      score: state.score,
+      date: new Date().toISOString()
+    }).catch(()=>{});
+  }
+
+  showScreen('finish');
+}
+
+function saveScore(entry) {
+  try {
+    const raw = localStorage.getItem('voiShooter_leaderboard') || '[]';
+    const list = JSON.parse(raw);
+    list.push(entry);
+
+    // Primary sort: Level DESC, Secondary: timeSurvived DESC, Tertiary: Score DESC
+    list.sort((a, b) => (b.level - a.level) || (b.timeSurvived - a.timeSurvived) || (b.score - a.score));
+
+    localStorage.setItem('voiShooter_leaderboard', JSON.stringify(list.slice(0, 50)));
+  } catch(e){}
+}
+
+function renderLeaderboardTable() {
+  const tbody = document.getElementById('lbTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  let list = [];
+  try {
+    const raw = localStorage.getItem('voiShooter_leaderboard');
+    if (raw) list = JSON.parse(raw);
+  } catch(e){}
+
+  if (list.length === 0) {
+    // Default demo leaderboard entries
+    list = [
+      { name: "CYBER_HATTY", level: 9, timeSurvived: 412, kills: 135, score: 98400 },
+      { name: "VOI_VALIDATOR", level: 8, timeSurvived: 360, kills: 110, score: 79200 },
+      { name: "ALGO_SURVIVOR", level: 6, timeSurvived: 275, kills: 80, score: 54100 },
+      { name: "NODE_RUNNER", level: 5, timeSurvived: 210, kills: 60, score: 38500 },
+      { name: "GENESIS_ROOT", level: 4, timeSurvived: 165, kills: 42, score: 26000 }
+    ];
+  }
+
+  list.sort((a, b) => (b.level - a.level) || (b.timeSurvived - a.timeSurvived) || (b.score - a.score));
+
+  list.slice(0, 15).forEach((entry, i) => {
+    const m = String(Math.floor(entry.timeSurvived / 60)).padStart(2, '0');
+    const s = String(entry.timeSurvived % 60).padStart(2, '0');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:${i === 0 ? '#ffb800' : i === 1 ? '#00f5ff' : i === 2 ? '#ff006e' : 'var(--dim)'}">#${i + 1}</td>
+      <td style="font-weight:bold;color:var(--text);">${escapeHtml(entry.name || 'OPERATIVE')}</td>
+      <td style="color:var(--accent);font-weight:bold;">LVL ${entry.level || 1}</td>
+      <td style="color:var(--warn);">${m}:${s}</td>
+      <td>${entry.kills || 0}</td>
+      <td style="color:var(--correct);font-weight:bold;">${(entry.score || 0).toLocaleString()}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ── 11. HUD & POWERUP BAR UPDATES ─────────────────────────────────────────
+function updateHUD() {
+  const lvlEl = document.getElementById('hudLevelNum');
+  const killsEl = document.getElementById('hudLevelKills');
+  const targetEl = document.getElementById('hudTargetKills');
+  const fillEl = document.getElementById('hudQuotaFill');
+  const scoreEl = document.getElementById('hudScore');
+
+  if (lvlEl) {
+    if (state.level <= 10) {
+      lvlEl.textContent = `${state.level} / 10`;
+    } else {
+      lvlEl.textContent = `${state.level} [ENDLESS]`;
+    }
+  }
+  if (killsEl) killsEl.textContent = state.levelKills;
+  if (targetEl) targetEl.textContent = state.targetKills;
+  if (scoreEl) scoreEl.textContent = state.score.toLocaleString();
+
+  if (fillEl) {
+    const pct = Math.min(100, Math.floor((state.levelKills / state.targetKills) * 100));
+    fillEl.style.width = pct + '%';
+  }
+
+  // Update 3 Lives
+  for (let i = 0; i < 3; i++) {
+    const heart = document.getElementById(`heart${i}`);
+    if (heart) {
+      heart.classList.toggle('lost', i >= state.lives);
+    }
+  }
+}
+
+function updatePowerupUI() {
+  const bar = document.getElementById('powerupBar');
+  if (!bar) return;
+  const now = Date.now();
+  let pills = '';
+
+  if (now < state.powerups.spreadUntil) {
+    const s = Math.ceil((state.powerups.spreadUntil - now) / 1000);
+    pills += `<div class="powerup-pill" style="border-color:#00ff9d;color:#00ff9d;">&#x26A1; TRIPLE BLASTER [${s}s]</div>`;
+  }
+  if (now < state.powerups.freezeUntil) {
+    const s = Math.ceil((state.powerups.freezeUntil - now) / 1000);
+    pills += `<div class="powerup-pill" style="border-color:#00cfff;color:#00cfff;">&#x2744; CRYO FREEZE [${s}s]</div>`;
+  }
+  if (now < state.powerups.shieldUntil) {
+    const s = Math.ceil((state.powerups.shieldUntil - now) / 1000);
+    pills += `<div class="powerup-pill" style="border-color:#7b00ff;color:#7b00ff;">&#x1F6E1; FORCEFIELD [${s}s]</div>`;
+  }
+
+  bar.innerHTML = pills;
+}
+
+// ── 12. CANVAS RENDER ENGINE (Advanced Cyberpunk Visuals) ─────────────────
+function renderGame() {
+  const c = document.getElementById('gameCanvas');
+  if (!c) return;
+  const cx = c.getContext('2d');
+  const now = Date.now();
+
+  cx.save();
+
+  // Screen shake with decay
+  if (state.screenShake > 0) {
+    const mag = state.screenShake * 0.85;
+    cx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
+    state.screenShake = Math.max(0, state.screenShake - 1);
+  }
+
+  // Deep Cyberspace Arena Background
+  cx.fillStyle = '#04080e';
+  cx.fillRect(0, 0, c.width, c.height);
+
+  // 1. Drifting Cyber Dust Starfield
+  if (state.starfield) {
+    for (const star of state.starfield) {
+      star.y += star.speed;
+      if (star.y > c.height) { star.y = 0; star.x = Math.random() * c.width; }
+      cx.save();
+      cx.fillStyle = star.color;
+      cx.globalAlpha = star.alpha * (0.6 + Math.sin(now * 0.003 + star.x) * 0.4);
+      cx.beginPath();
+      cx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+      cx.fill();
+      cx.restore();
+    }
+  }
+
+  // 2. High-Tech Hex & Circuit Grid Floor
+  cx.save();
+  const gridSize = 50;
+  cx.strokeStyle = 'rgba(0, 245, 255, 0.06)';
+  cx.lineWidth = 1;
+  for (let x = 0; x < c.width; x += gridSize) {
+    cx.beginPath(); cx.moveTo(x, 0); cx.lineTo(x, c.height); cx.stroke();
+    // Intersection circuit capacitor dots
+    for (let y = 0; y < c.height; y += gridSize) {
+      if ((x + y) % (gridSize * 2) === 0) {
+        cx.fillStyle = 'rgba(0, 245, 255, 0.18)';
+        cx.fillRect(x - 1.5, y - 1.5, 3, 3);
+      }
+    }
+  }
+  for (let y = 0; y < c.height; y += gridSize) {
+    cx.beginPath(); cx.moveTo(0, y); cx.lineTo(c.width, y); cx.stroke();
+  }
+  cx.restore();
+
+  // 3. Shockwave Blast Rings
+  if (state.shockwaves) {
+    for (let s = state.shockwaves.length - 1; s >= 0; s--) {
+      const sw = state.shockwaves[s];
+      sw.radius += sw.speed;
+      sw.life -= 0.03;
+      if (sw.life <= 0) {
+        state.shockwaves.splice(s, 1);
+        continue;
+      }
+      cx.save();
+      cx.strokeStyle = sw.color || '#00f5ff';
+      cx.lineWidth = sw.width * sw.life;
+      cx.globalAlpha = sw.life;
+      cx.shadowColor = sw.color || '#00f5ff';
+      cx.shadowBlur = 8;
+      cx.beginPath();
+      cx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+      cx.stroke();
+      cx.restore();
+    }
+  }
+
+  // 4. Glowing Arena Perimeter Barrier
+  cx.save();
+  cx.strokeStyle = 'rgba(0, 245, 255, 0.35)';
+  cx.lineWidth = 2.5;
+  cx.shadowColor = '#00f5ff';
+  cx.shadowBlur = 12;
+  cx.strokeRect(3, 3, c.width - 6, c.height - 6);
+
+  // Corner security pylons
+  const pylonSize = 14;
+  cx.fillStyle = '#00f5ff';
+  [[3,3], [c.width - 3 - pylonSize, 3], [3, c.height - 3 - pylonSize], [c.width - 3 - pylonSize, c.height - 3 - pylonSize]].forEach(([px, py]) => {
+    cx.fillRect(px, py, pylonSize, pylonSize);
+  });
+  cx.restore();
+
+  // 5. Draw 3D-Styled Drops & Pickups
+  for (const d of state.drops) {
+    const dAge = now - (d.createdAt || now);
+    if (dAge > 14000 && Math.floor(now / 150) % 2 === 0) continue; // Blink before expiring
+    d.angle += 0.035;
+    const bob = Math.sin(now * 0.005 + d.x) * 4;
+    cx.save();
+    cx.translate(d.x, d.y + bob);
+
+    let color = '#00ff9d', icon = 'TRIPLE', symbol = '⚡';
+    if (d.type === 'emp') { color = '#ff006e'; icon = 'EMP'; symbol = '💥'; }
+    if (d.type === 'freeze') { color = '#00cfff'; icon = 'CRYO'; symbol = '❄'; }
+    if (d.type === 'shield') { color = '#7b00ff'; icon = 'SHIELD'; symbol = '🛡'; }
+
+    // Hologram floor ring
+    cx.strokeStyle = color;
+    cx.lineWidth = 1.2;
+    cx.beginPath();
+    cx.ellipse(0, 18, 16, 5, 0, 0, Math.PI * 2);
+    cx.stroke();
+
+    // Rotating 3D Diamond Beacon
+    cx.rotate(d.angle);
+    cx.strokeStyle = color; cx.lineWidth = 2;
+    cx.fillStyle = 'rgba(6, 14, 24, 0.85)';
+    cx.shadowColor = color; cx.shadowBlur = 14;
+    cx.beginPath();
+    cx.moveTo(0, -14); cx.lineTo(14, 0); cx.lineTo(0, 14); cx.lineTo(-14, 0);
+    cx.closePath();
+    cx.fill(); cx.stroke();
+
+    // Inner icon
+    cx.fillStyle = color;
+    cx.font = 'bold 11px Orbitron, monospace';
+    cx.textAlign = 'center'; cx.textBaseline = 'middle';
+    cx.fillText(symbol, 0, 0);
+    cx.restore();
+  }
+
+  // 6. Draw Enemy Bullets (Corrupt Byte Orbs)
+  for (const eb of state.enemyBullets) {
+    cx.save();
+    cx.translate(eb.x, eb.y);
+    const col = eb.color || '#ff006e';
+
+    cx.shadowColor = col; cx.shadowBlur = 6;
+    cx.fillStyle = col;
+    cx.beginPath();
+    cx.arc(0, 0, 4.5, 0, Math.PI * 2);
+    cx.fill();
+
+    // Dark antimatter core
+    cx.fillStyle = '#050a0f';
+    cx.beginPath();
+    cx.arc(0, 0, 2, 0, Math.PI * 2);
+    cx.fill();
+    cx.restore();
+  }
+
+  // 7. Draw Player Lasers (Elongated High-Speed Plasma Bolts)
+  for (const b of state.bullets) {
+    cx.save();
+    cx.translate(b.x, b.y);
+    const ang = Math.atan2(b.vy, b.vx);
+    cx.rotate(ang);
+
+    const bCol = b.color || '#00f5ff';
+    cx.shadowColor = bCol; cx.shadowBlur = 6;
+
+    // Glowing plasma bolt
+    const boltGrad = cx.createLinearGradient(-12, 0, 4, 0);
+    boltGrad.addColorStop(0, 'rgba(0, 245, 255, 0)');
+    boltGrad.addColorStop(0.3, bCol);
+    boltGrad.addColorStop(1, '#ffffff');
+    cx.fillStyle = boltGrad;
+    cx.fillRect(-12, -2.5, 16, 5);
+
+    // Bright plasma tip
+    cx.fillStyle = '#ffffff';
+    cx.beginPath();
+    cx.arc(4, 0, 2.5, 0, Math.PI * 2);
+    cx.fill();
+    cx.restore();
+  }
+
+  // 8. Draw Bad Code Guys (Advanced Mechanical Cyber Graphics)
+  for (const e of state.enemies) {
+    cx.save();
+    cx.translate(e.x, e.y);
+
+    cx.shadowColor = e.color;
+    cx.shadowBlur = 12;
+    cx.strokeStyle = e.color;
+    cx.lineWidth = 2;
+
+    if (e.type === 'null') {
+      // Mechanical Crimson Bug with articulating legs
+      cx.fillStyle = '#14050a';
+      // 4 cyber spider legs
+      for (let side = -1; side <= 1; side += 2) {
+        for (let l = 0; l < 2; l++) {
+          const legWiggle = Math.sin(now * 0.02 + e.x + l) * 4;
+          cx.beginPath();
+          cx.moveTo(side * 8, (l - 0.5) * 8);
+          cx.lineTo(side * 18 + legWiggle, (l - 0.5) * 16);
+          cx.stroke();
+        }
+      }
+      // Hexagonal body
+      cx.beginPath();
+      cx.arc(0, 0, e.radius, 0, Math.PI * 2);
+      cx.fill(); cx.stroke();
+
+      // Glowing optic slit
+      cx.fillStyle = '#ff0033';
+      cx.fillRect(-6, -2, 12, 4);
+
+      // Symbol
+      cx.fillStyle = '#ffffff';
+      cx.font = 'bold 9px Share Tech Mono, monospace';
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText('0x00', 0, 6);
+
+    } else if (e.type === 'syntax') {
+      // Yellow-Amber Winged Glitch Hornet
+      cx.fillStyle = '#1a1403';
+      // Fluttering energy wings
+      const wingFlutter = Math.sin(now * 0.05) * 8;
+      cx.fillStyle = 'rgba(255, 184, 0, 0.25)';
+      cx.beginPath();
+      cx.ellipse(-10, -8 + wingFlutter, 12, 4, -0.4, 0, Math.PI * 2);
+      cx.ellipse(10, -8 + wingFlutter, 12, 4, 0.4, 0, Math.PI * 2);
+      cx.fill(); cx.stroke();
+
+      // Diamond chassis
+      cx.fillStyle = '#1a1403';
+      cx.beginPath();
+      cx.moveTo(0, -e.radius); cx.lineTo(e.radius, 0); cx.lineTo(0, e.radius); cx.lineTo(-e.radius, 0);
+      cx.closePath();
+      cx.fill(); cx.stroke();
+
+      // Glowing Semicolon
+      cx.fillStyle = '#ffb800';
+      cx.font = 'bold 13px Orbitron, monospace';
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText('{;}', 0, 0);
+
+    } else if (e.type === 'memory') {
+      // Heavy Octagonal Cyber Tank Prism
+      cx.fillStyle = '#061320';
+      cx.beginPath();
+      for (let s = 0; s < 8; s++) {
+        const a = (s / 8) * Math.PI * 2 + (now * 0.001);
+        const px = Math.cos(a) * e.radius;
+        const py = Math.sin(a) * e.radius;
+        if (s === 0) cx.moveTo(px, py); else cx.lineTo(px, py);
+      }
+      cx.closePath();
+      cx.fill(); cx.stroke();
+
+      // Pulsing core
+      const pCore = 6 + Math.sin(now * 0.006) * 3;
+      cx.fillStyle = 'rgba(0, 207, 255, 0.4)';
+      cx.beginPath(); cx.arc(0, 0, pCore, 0, Math.PI * 2); cx.fill();
+
+      // Symbol
+      cx.fillStyle = '#00cfff';
+      cx.font = 'bold 10px Share Tech Mono, monospace';
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText('[MEM]', 0, 0);
+
+    } else if (e.type === 'loop') {
+      // Hot Pink Mobius Loop with dash laser sight
+      cx.rotate(now * 0.004);
+      cx.fillStyle = '#1a0412';
+      cx.beginPath();
+      cx.arc(-7, 0, 9, 0, Math.PI * 2);
+      cx.arc(7, 0, 9, 0, Math.PI * 2);
+      cx.fill(); cx.stroke();
+
+      cx.fillStyle = '#ff00a0';
+      cx.font = 'bold 16px Rajdhani, sans-serif';
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText('∞', 0, 0);
+
+    } else if (e.type === 'fork') {
+      // Mini-boss Daemon: Dual Counter-rotating shields
+      cx.fillStyle = '#120520';
+      cx.beginPath();
+      cx.arc(0, 0, e.radius, 0, Math.PI * 2);
+      cx.fill(); cx.stroke();
+
+      // Outer rotating shields
+      cx.save();
+      cx.rotate(now * 0.002);
+      cx.strokeStyle = '#a855f7'; cx.lineWidth = 3;
+      cx.beginPath();
+      cx.arc(0, 0, e.radius + 6, 0, Math.PI * 1.5);
+      cx.stroke();
+      cx.restore();
+
+      // Core symbol
+      cx.fillStyle = '#ffffff';
+      cx.font = 'bold 11px Orbitron, monospace';
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText('FORK', 0, 0);
+    } else if (e.type === 'singularity') {
+      // Level 10 Grand Boss: The 51% Attack Singularity
+      cx.save();
+      cx.fillStyle = '#1c030c';
+      cx.beginPath();
+      cx.arc(0, 0, e.radius, 0, Math.PI * 2);
+      cx.fill(); cx.stroke();
+
+      // Rotating triple barrier shields
+      cx.rotate(now * 0.003);
+      for (let s = 0; s < 3; s++) {
+        cx.beginPath();
+        cx.strokeStyle = '#ff0055'; cx.lineWidth = 3.5;
+        cx.arc(0, 0, e.radius + 8, (s * Math.PI * 2 / 3), (s * Math.PI * 2 / 3) + 1.2);
+        cx.stroke();
+      }
+
+      // Core pulsing eye
+      const eyeP = 14 + Math.sin(now * 0.008) * 4;
+      cx.fillStyle = '#ff0055';
+      cx.beginPath(); cx.arc(0, 0, eyeP, 0, Math.PI * 2); cx.fill();
+
+      // Boss label
+      cx.fillStyle = '#ffffff';
+      cx.font = 'bold 11px Orbitron, monospace';
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillText('51% BOSS', 0, 0);
+      cx.restore();
+    }
+
+    // Health Bar if damaged
+    if (e.hp < e.maxHp) {
+      cx.fillStyle = 'rgba(255, 0, 60, 0.4)';
+      cx.fillRect(-16, -e.radius - 10, 32, 4);
+      cx.fillStyle = '#00ff9d';
+      cx.fillRect(-16, -e.radius - 10, 32 * (e.hp / e.maxHp), 4);
+      cx.strokeStyle = '#050a0f'; cx.lineWidth = 0.8;
+      cx.strokeRect(-16, -e.radius - 10, 32, 4);
+    }
+
+    cx.restore();
+  }
+
+  // 9. Draw Laser Targeting Line from Player to Cursor
+  cx.save();
+  cx.strokeStyle = 'rgba(0, 245, 255, 0.22)';
+  cx.lineWidth = 1;
+  cx.setLineDash([4, 6]);
+  cx.beginPath();
+  cx.moveTo(state.player.x, state.player.y);
+  cx.lineTo(state.mousePos.x, state.mousePos.y);
+  cx.stroke();
+  cx.restore();
+
+  // 10. Draw Custom Animated Reticle Crosshair at Mouse Position
+  cx.save();
+  cx.translate(state.mousePos.x, state.mousePos.y);
+  cx.rotate(now * 0.002);
+  cx.strokeStyle = 'rgba(0, 245, 255, 0.6)';
+  cx.lineWidth = 1.2;
+  cx.beginPath();
+  cx.arc(0, 0, 12, 0, Math.PI * 0.5);
+  cx.arc(0, 0, 12, Math.PI, Math.PI * 1.5);
+  cx.stroke();
+  cx.fillStyle = '#00ff9d';
+  cx.beginPath();
+  cx.arc(0, 0, 2, 0, Math.PI * 2);
+  cx.fill();
+  cx.restore();
+
+  // 11. Draw Upgraded Player Ship (Sleek Cyber Interceptor)
+  cx.save();
+  cx.translate(state.player.x, state.player.y);
+  cx.rotate(state.player.angle);
+
+  const isInvuln = now < state.player.invulnerableUntil;
+  const hasShield = now < state.powerups.shieldUntil;
+
+  // Forcefield Bubble
+  if (hasShield || (isInvuln && Math.floor(now / 80) % 2 === 0)) {
+    cx.save();
+    cx.strokeStyle = hasShield ? '#7b00ff' : 'rgba(0, 245, 255, 0.85)';
+    cx.lineWidth = 2.5;
+    cx.shadowColor = hasShield ? '#7b00ff' : '#00f5ff';
+    cx.shadowBlur = 18;
+    cx.beginPath();
+    cx.arc(0, 0, state.player.radius + 10, 0, Math.PI * 2);
+    cx.stroke();
+    // Rotating shield segments
+    cx.rotate(now * 0.004);
+    cx.strokeStyle = '#ffffff'; cx.lineWidth = 1.5;
+    cx.beginPath();
+    cx.arc(0, 0, state.player.radius + 10, 0, Math.PI * 0.4);
+    cx.stroke();
+    cx.restore();
+  }
+
+  // Twin Ion Engine Flame Exhaust
+  const thrustLen = 14 + Math.random() * 8;
+  const flameGrad = cx.createLinearGradient(-15, 0, -15 - thrustLen, 0);
+  flameGrad.addColorStop(0, '#ffffff');
+  flameGrad.addColorStop(0.3, '#00f5ff');
+  flameGrad.addColorStop(0.7, '#7b00ff');
+  flameGrad.addColorStop(1, 'rgba(123, 0, 255, 0)');
+  cx.fillStyle = flameGrad;
+  // Left nozzle flame
+  cx.beginPath();
+  cx.moveTo(-12, -5); cx.lineTo(-15 - thrustLen, -5); cx.lineTo(-12, -2);
+  cx.closePath(); cx.fill();
+  // Right nozzle flame
+  cx.beginPath();
+  cx.moveTo(-12, 2); cx.lineTo(-15 - thrustLen, 5); cx.lineTo(-12, 5);
+  cx.closePath(); cx.fill();
+
+  // Ship Hull (Sleek aerodynamic interceptor)
+  cx.shadowColor = '#00f5ff'; cx.shadowBlur = 14;
+  cx.fillStyle = '#071626';
+  cx.strokeStyle = '#00f5ff';
+  cx.lineWidth = 2;
+
+  cx.beginPath();
+  cx.moveTo(22, 0);           // Nose
+  cx.lineTo(2, -7);           // Forward fuselage
+  cx.lineTo(-14, -18);        // Left wing tip
+  cx.lineTo(-9, -4);          // Left inner wing
+  cx.lineTo(-14, 0);          // Engine base
+  cx.lineTo(-9, 4);           // Right inner wing
+  cx.lineTo(-14, 18);         // Right wing tip
+  cx.lineTo(2, 7);            // Forward fuselage
+  cx.closePath();
+  cx.fill(); cx.stroke();
+
+  // Wing accent stripes
+  cx.strokeStyle = '#00ff9d'; cx.lineWidth = 1.2;
+  cx.beginPath();
+  cx.moveTo(-8, -12); cx.lineTo(0, -6);
+  cx.moveTo(-8, 12);  cx.lineTo(0, 6);
+  cx.stroke();
+
+  // Cockpit Canopy Glass
+  cx.fillStyle = 'rgba(0, 245, 255, 0.85)';
+  cx.beginPath();
+  cx.ellipse(2, 0, 7, 3, 0, 0, Math.PI * 2);
+  cx.fill();
+  // Glass specular sheen
+  cx.fillStyle = '#ffffff';
+  cx.beginPath();
+  cx.ellipse(3, -1, 3, 1, 0, 0, Math.PI * 2);
+  cx.fill();
+
+  // Center Reactor
+  cx.fillStyle = '#00ff9d';
+  cx.shadowColor = '#00ff9d'; cx.shadowBlur = 10;
+  cx.beginPath();
+  cx.arc(-4, 0, 3, 0, Math.PI * 2);
+  cx.fill();
+
+  cx.restore();
+
+  // 12. Draw Particles (Sparks & Debris)
+  for (const p of state.particles) {
+    cx.save();
+    cx.fillStyle = p.color;
+    cx.globalAlpha = Math.max(0, p.life);
+    // particle blur removed for locked 60fps
+    cx.beginPath();
+    cx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    cx.fill();
+    cx.restore();
+  }
+
+  // 13. Draw Floating Combat Texts
+  for (const ft of state.floatingTexts) {
+    cx.save();
+    cx.fillStyle = ft.color;
+    cx.globalAlpha = Math.max(0, ft.life);
+    cx.shadowColor = ft.color; cx.shadowBlur = 4;
+    cx.font = 'bold 14px Orbitron, monospace';
+    cx.textAlign = 'center';
+    cx.fillText(ft.text, ft.x, ft.y);
+    cx.restore();
+  }
+
+  cx.restore();
+}
+
+function resizeCanvas() {
+  const c = document.getElementById('gameCanvas');
+  const w = document.getElementById('canvasWrapper');
+  if (!c || !w) return;
+  const oldW = c.width, oldH = c.height;
+  c.width = w.clientWidth || window.innerWidth;
+  c.height = w.clientHeight || window.innerHeight;
+
+  // Auto-center player if uninitialized or stuck in corner
+  if (state.screen === 'game' && (state.player.x === 0 || (oldW <= 300 && state.player.x <= 150))) {
+    state.player.x = Math.round(c.width / 2);
+    state.player.y = Math.round(c.height / 2);
+    state.mousePos.x = state.player.x;
+    state.mousePos.y = state.player.y - 140;
+  }
+}
+window.addEventListener('resize', () => {
+  if (state.screen === 'game') resizeCanvas();
+});
+
+// ── 13. CONTROLS & INPUT HANDLERS ─────────────────────────────────────────
+window.addEventListener('keydown', (e) => {
+  state.keys[e.key.toLowerCase()] = true;
+  state.keys[e.key] = true;
+
+  // Consensus Modal hotkeys
+  if (state.inCheckpoint) {
+    if (!state.checkpointAnswered) {
+      const keyNum = parseInt(e.key);
+      if (!isNaN(keyNum) && keyNum >= 1 && keyNum <= 4) {
+        selectConsensusAnswer(keyNum - 1);
+      }
+    } else {
+      // If already answered, Space or Enter immediately triggers continue!
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        const actionBtn = document.getElementById('termActionBtn');
+        if (actionBtn && actionBtn.onclick) actionBtn.onclick();
+      }
+    }
+  }
+});
+
+window.addEventListener('keyup', (e) => {
+  state.keys[e.key.toLowerCase()] = false;
+  state.keys[e.key] = false;
+});
+
+window.addEventListener('mousemove', (e) => {
+  const c = document.getElementById('gameCanvas');
+  if (!c) return;
+  const rect = c.getBoundingClientRect();
+  state.mousePos.x = e.clientX - rect.left;
+  state.mousePos.y = e.clientY - rect.top;
+});
+
+window.addEventListener('mousedown', (e) => {
+  if (e.target.closest('#hudTop') || e.target.closest('#consensusModal') || e.target.closest('#topLeftCluster')) return;
+  state.player.isShooting = true;
+});
+
+window.addEventListener('mouseup', () => {
+  state.player.isShooting = false;
+});
+
+// Touch aiming & firing
+window.addEventListener('touchstart', (e) => {
+  if (e.touches.length > 0) {
+    const t = e.touches[0];
+    const c = document.getElementById('gameCanvas');
+    if (!c) return;
+    const rect = c.getBoundingClientRect();
+    state.mousePos.x = t.clientX - rect.left;
+    state.mousePos.y = t.clientY - rect.top;
+  }
+}, { passive: true });
+
+window.addEventListener('touchmove', (e) => {
+  if (e.touches.length > 0) {
+    const t = e.touches[0];
+    const c = document.getElementById('gameCanvas');
+    if (!c) return;
+    const rect = c.getBoundingClientRect();
+    state.mousePos.x = t.clientX - rect.left;
+    state.mousePos.y = t.clientY - rect.top;
+  }
+}, { passive: true });
+
+const fireBtn = document.getElementById('rightFireBtn');
+if (fireBtn) {
+  fireBtn.addEventListener('touchstart', (e) => { e.preventDefault(); state.player.isShooting = true; });
+  fireBtn.addEventListener('touchend', (e) => { e.preventDefault(); state.player.isShooting = false; });
+}
+
+// ── 14. EVENT LISTENERS & NAVIGATION ──────────────────────────────────────
+document.getElementById('startBtn').addEventListener('click', () => {
+  const nameInput = document.getElementById('playerName');
+  const name = nameInput ? nameInput.value.trim() : 'OPERATIVE';
+  initShooterGame(name);
+});
+
+document.getElementById('restartBtn').addEventListener('click', () => {
+  initShooterGame(state.playerName);
+});
+
+// Victory screen actions
+const vicEndless = document.getElementById('vicEndlessBtn');
+if (vicEndless) vicEndless.addEventListener('click', enterEndlessMode);
+
+const vicLb = document.getElementById('vicLbBtn');
+if (vicLb) vicLb.addEventListener('click', () => {
+  renderLeaderboardTable();
+  showScreen('lb');
+});
+
+const vicRestart = document.getElementById('vicRestartBtn');
+if (vicRestart) vicRestart.addEventListener('click', () => {
+  initShooterGame(state.playerName);
+});
+
+document.getElementById('lbBtn').addEventListener('click', () => {
+  renderLeaderboardTable();
+  showScreen('lb');
+});
+document.getElementById('lbFinishBtn').addEventListener('click', () => {
+  renderLeaderboardTable();
+  showScreen('lb');
+});
+document.getElementById('lbCloseBtn').addEventListener('click', () => {
+  showScreen('start');
+});
+
+// Info Modal
+document.getElementById('infoBtn').addEventListener('click', () => {
+  document.getElementById('infoOverlay').classList.add('show');
+});
+document.getElementById('closeInfoBtn').addEventListener('click', () => {
+  document.getElementById('infoOverlay').classList.remove('show');
+});
+
+// Audio & Music Toggles
+(function() {
+  const bgMusic = document.getElementById('bgMusic');
+  let musicMuted = false;
+
+  window.startGameMusic = function() {
+    if (musicMuted || !bgMusic) return;
+    bgMusic.volume = 0.35;
+    bgMusic.play().catch(()=>{});
+  };
+  window.stopGameMusic = function() {
+    if (bgMusic) bgMusic.pause();
+  };
+
+  const mBtn = document.getElementById('musicBtn');
+  if (mBtn) {
+    mBtn.addEventListener('click', () => {
+      musicMuted = !musicMuted;
+      if (musicMuted) {
+        window.stopGameMusic();
+        mBtn.textContent = '♪ MUSIC OFF';
+        mBtn.classList.add('muted');
+      } else {
+        window.startGameMusic();
+        mBtn.textContent = '♪ MUSIC ON';
+        mBtn.classList.remove('muted');
+      }
+    });
+  }
+
+  const sfxBtn = document.getElementById('muteBtn');
+  if (sfxBtn) {
+    sfxBtn.addEventListener('click', () => {
+      audio.muted = !audio.muted;
+      sfxBtn.textContent = audio.muted ? 'SFX OFF' : 'SFX ON';
+    });
+  }
+})();
+
+// Links Dropdown
+(function() {
+  const btn = document.getElementById('linksBtn');
+  const menu = document.getElementById('linksMenu');
+  if (!btn || !menu) return;
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const open = menu.classList.toggle('open');
+    btn.classList.toggle('open', open);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!btn.contains(e.target) && !menu.contains(e.target)) {
+      menu.classList.remove('open');
+      btn.classList.remove('open');
+    }
+  });
+})();
+
+// ── 15. BOOTSTRAP ─────────────────────────────────────────────────────────
+(async () => {
+  const fbPromise = initFirebase();
+  await runSplash();
+  await fbPromise;
+})();
+</script>
+</body>
+</html>
